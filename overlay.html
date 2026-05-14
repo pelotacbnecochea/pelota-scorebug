@@ -74,8 +74,15 @@
         const chan = ably.channels.get('p-neco');
         
         function updateOverlay(s) {
-            document.getElementById('prism-overlay').style.transform = 'scale(' + s.scale + ')';
-            document.getElementById('prism-overlay').classList.toggle('hidden', s.route !== 'sb');
+            // 1. Fallback to 1.0 if scale is undefined, and assign it directly
+            const scaleFactor = s.scale || '1.0';
+            const overlayEl = document.getElementById('prism-overlay');
+            
+            overlayEl.style.transformOrigin = 'top left'; // Keeps widget anchored to the corner when scaling
+            overlayEl.style.transform = 'scale(' + scaleFactor + ')';
+            
+            // 2. Rest of your original overlay logic proceeds flawlessly
+            overlayEl.classList.toggle('hidden', s.route !== 'sb');
             document.getElementById('next-box').classList.toggle('hidden', s.route !== 'nx');
             if(s.route === 'sb') {
                 document.getElementById('hl').innerText = s.hl; document.getElementById('hr').innerText = s.hr;
