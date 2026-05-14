@@ -8,9 +8,8 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #1a252f; color: #fff; box-sizing: border-box; }
         #remote-panel { max-width: 100%; margin: 0 auto; }
-        .sect { background: #2c3e50; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .sect { background: #2c3e50; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
         h2 { margin: 0 0 10px 0; font-size: 18px; color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; text-transform: uppercase; }
-        h3 { margin: 0 0 8px 0; font-size: 14px; color: #ecf0f1; }
         .f-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
         input[type="text"] { padding: 12px; border-radius: 6px; border: 1px solid #34495e; background: #111; color: white; font-size: 15px; flex-grow: 1; min-width: 120px; box-sizing: border-box; }
         .btn { background: #e74c3c; color: white; border: none; padding: 12px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; flex-grow: 1; text-align: center; }
@@ -20,13 +19,15 @@
         .b-grp label { display: block; font-size: 10px; color: #bdc3c7; margin-bottom: 4px; font-weight: bold; }
         .g-up { width: 100%; height: 60px; font-size: 24px; font-weight: bold; background: #2ecc71; color: white; border: none; border-radius: 6px; }
         .g-down { width: 100%; height: 35px; font-size: 14px; background: #7f8c8d; color: white; border: none; border-radius: 6px; margin-top: 5px; }
-        .promote-btn { background: #d35400; color: white; width: 100%; padding: 15px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 8px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .promote-btn:active { background: #b34700; }
+        .promote-btn { background: #d35400; color: white; width: 100%; padding: 15px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 8px; text-transform: uppercase; }
+        #auth-fail { background: #2c3e50; position: fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; }
     </style>
 </head>
 <body>
 
-    <div id="remote-panel">
+    <div id="auth-fail">⚠️ Access Unauthorized</div>
+
+    <div id="remote-panel" style="display:none;">
         <div class="sect" style="background:#27ae60;">
             <h2>🎛️ Live Screen Router</h2>
             <div class="f-row">
@@ -81,7 +82,7 @@
         </div>
 
         <div class="sect" style="border-left:5px solid #e67e22;">
-            <h2 style="color:#e67e22;">🟠 Next Match Prep Box</h2>
+            <h2>🟠 Next Match Prep Box</h2>
             <div class="f-row"><input type="text" id="n-hl" placeholder="Next Header Left" oninput="syncPrepInputs()"><input type="text" id="n-hr" placeholder="Next Header Right" oninput="syncPrepInputs()"></div>
             <div class="f-row"><input type="text" id="n-t1n" placeholder="Next Team 1 Name" oninput="syncPrepInputs()"><input type="text" id="n-t1p" placeholder="Next Team 1 Players" oninput="syncPrepInputs()"></div>
             <div class="f-row"><input type="text" id="n-t2n" placeholder="Next Team 2 Name" oninput="syncPrepInputs()"><input type="text" id="n-t2p" placeholder="Next Team 2 Players" oninput="syncPrepInputs()"></div>
@@ -89,21 +90,26 @@
     </div>
 
     <script>
-        const ably = new Ably.Realtime('0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY');
-        const chan = ably.channels.get('p-neco');
+        var params = new URLSearchParams(window.location.search);
+        if(params.get('auth') === "7630") {
+            document.getElementById('auth-fail').style.display = "none";
+            document.getElementById('remote-panel').style.display = "block";
 
-        let state = {
-            route: 'sb', scale: '1.0', hl:'FPPBA', hr:'Fecha 3', dl:'Necochea', dr:'LIVE', t1n:'Team 1', t1p:'Players 1', t2n:'Team 2', t2p:'Players 2',
-            t1m:0, t1s1:0, t1s2:0, t1s3:0, t2m:0, t2s1:0, t2s2:0, t2s3:0, vh:true, vt:false, vd:true, v1:false, v2:false, bm:true, bs1:true, bs2:true, bs3:true, tu:'', t1l:'', t2l:'',
-            nhl:'FPPBA', nhr:'Proximo', nt1n:'', nt1p:'', nt2n:'', nt2p:''
-        };
+            var ably = new Ably.Realtime('0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY');
+            var chan = ably.channels.get('p-neco');
 
-        // Network connection listener to set baseline form fields once on load
-        chan.subscribe('u', function(m) {
-            state = m.data;
-            chan.unsubscribe(); // Stop listening immediately to prevent phone typing lockups
-            updateButtonStylesOnly();
-        });
+            var state = {
+                route: 'sb', scale: '1.0', hl:'FPPBA', hr:'Fecha 3', dl:'Necochea', dr:'LIVE', t1n:'Team 1', t1p:'Players 1', t2n:'Team 2', t2p:'Players 2',
+                t1m:0, t1s1:0, t1s2:0, t1s3:0, t2m:0, t2s1:0, t2s2:0, t2s3:0, vh:true, vt:false, vd:true, v1:false, v2:false, bm:true, bs1:true, bs2:true, bs3:true, tu:'', t1l:'', t2l:'',
+                nhl:'FPPBA', nhr:'Proximo', nt1n:'', nt1p:'', nt2n:'', nt2p:''
+            };
+
+            chan.subscribe('u', function(m) {
+                state = m.data;
+                chan.unsubscribe();
+                updateButtonStylesOnly();
+            });
+        }
 
         function psh() { chan.publish('u', state); }
         function setRouting(r) { state.route = r; syncPrepInputs(); psh(); updateButtonStylesOnly(); }
@@ -131,7 +137,6 @@
             state.route = 'sb';
             psh();
             
-            // Wipe input values completely on the remote layout form
             document.getElementById('i-t1n').value = state.t1n; document.getElementById('i-t1p').value = state.t1p;
             document.getElementById('i-t2n').value = state.t2n; document.getElementById('i-t2p').value = state.t2p;
             document.getElementById('n-hl').value = ''; document.getElementById('n-hr').value = '';
@@ -148,12 +153,4 @@
             document.getElementById('cb-tl').className = 'btn' + (state.vt?' active':'');
             document.getElementById('cb-d').className = 'btn' + (state.vd?' active':'');
             document.getElementById('cb-t1l').className = 'btn' + (state.v1?' active':'');
-            document.getElementById('cb-t2l').className = 'btn' + (state.v2?' active':'');
-            document.getElementById('cb-m').className = 'btn' + (state.bm?' active':'');
-            document.getElementById('cb-s1').className = 'btn' + (state.bs1?' active':'');
-            document.getElementById('cb-s2').className = 'btn' + (state.bs2?' active':'');
-            document.getElementById('cb-s3').className = 'btn' + (state.bs3?' active':'');
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('cb-t2l
