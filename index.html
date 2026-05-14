@@ -4,60 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Basque Pelota Cloud Scorebug</title>
-    <!-- Corrected real-time database library link -->
-    <script src="ably.com"></script>
+    <!-- FIXED: Canonical Ably JavaScript Live SDK via CDN -->
+    <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
     <style>
         :root {
             --bg-primary: #111111; --bg-secondary: #1a1a1a;
             --text-primary: #ffffff; --text-secondary: #aaaaaa;
             --accent-color: #d4af37; --box-bg: #222222;
-            --scale-factor: 1.0;
         }
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #2c3e50; color: #fff; overflow: hidden; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; background-color: transparent; color: #fff; }
         
-        /* --- STREAM MODE STYLING (TOP LEFT & TRANSPARENT) --- */
-        body.mode-overlay { background: transparent !important; width: 100vw; height: 100vh; position: relative; }
-        body.mode-overlay #view-modes, body.mode-overlay #remote-panel { display: none !important; }
-
-        /* --- SCOREBUG POSITIONING (TOP LEFT) --- */
+        /* --- VISUAL STYLES FOR OVERLAY / APP CONTAINER --- */
+        #main-wrapper { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        
+        /* Fixed Top Left Positioning */
         #prism-overlay { 
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 550px; 
-            display: flex; 
-            flex-direction: column; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            font-weight: bold; 
-            transform: scale(var(--scale-factor));
-            transform-origin: top left;
-            transition: transform 0.2s ease, opacity 0.3s ease;
-            z-index: 10;
+            position: absolute; top: 15px; left: 15px;
+            width: 550px; display: flex; flex-direction: column; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-weight: bold; 
+            transition: opacity 0.3s ease; transform-origin: top left;
         }
-
-        /* --- BIG NEXT MATCH BOX (DEAD CENTER) --- */
-        #next-match-card {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(var(--scale-factor));
-            width: 700px;
-            background-color: var(--bg-primary);
-            border: 3px solid var(--accent-color);
+        
+        /* Absolute Dead Center Positioning for Big Match Banner */
+        #big-next-match-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px; background: var(--bg-primary);
+            border: 3px solid var(--accent-color); border-radius: 8px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-            font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            z-index: 20;
-            transition: opacity 0.3s ease;
+            padding: 25px; text-align: center; font-weight: bold;
+            transition: opacity 0.3s ease; z-index: 999;
         }
-        #nm-header { background: var(--bg-secondary); color: var(--accent-color); text-align: center; padding: 15px; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid var(--accent-color); }
-        #nm-body { padding: 30px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .nm-team-row { font-size: 28px; text-align: center; }
-        .nm-players { font-size: 18px; color: var(--text-secondary); font-weight: normal; margin-top: 5px; }
-        .nm-vs { color: var(--accent-color); font-size: 20px; font-style: italic; }
-
-        /* --- SCOREBUG INTERNAL ELEMENTS --- */
+        .big-banner-title { color: var(--accent-color); font-size: 20px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+        .big-banner-header { font-size: 24px; color: var(--text-primary); margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .big-banner-vs-row { display: flex; justify-content: space-around; align-items: center; font-size: 28px; }
+        .big-banner-team { width: 42%; display: flex; flex-direction: column; }
+        .big-banner-team .p-names { font-size: 16px; color: var(--text-secondary); font-weight: normal; margin-top: 5px; }
+        
+        /* Internal rows */
         .overlay-row { display: flex; align-items: stretch; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
         #header-row { background-color: var(--bg-secondary); color: var(--accent-color); font-size: 13px; text-transform: uppercase; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
         #tournament-logo { width: 45px; background-color: var(--bg-secondary); border-right: 1px solid rgba(255,255,255,0.1); background-size: contain; background-repeat: no-repeat; background-position: center; }
@@ -72,19 +56,19 @@
         .match-box { background-color: var(--bg-secondary); color: var(--accent-color); border-right: 2px solid var(--accent-color); }
         #dropline-row { background-color: var(--bg-secondary); font-size: 12px; padding: 5px 12px; display: flex; justify-content: space-between; color: var(--text-secondary); border-top: 1px solid rgba(255,255,255,0.1); }
 
-        /* --- REMOTE PANEL MODE STYLING --- */
-        body.mode-remote { background-color: #2c3e50; overflow-y: auto; padding: 15px; }
-        body.mode-remote #prism-overlay, body.mode-remote #next-match-card { display: none !important; }
-        #remote-panel { max-width: 600px; margin: 0 auto; background: #1a252f; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        /* --- PHONE REMOTE DASHBOARD STYLES --- */
+        #remote-panel { max-width: 600px; margin: 10px auto; background: #1a252f; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .panel-section { background: #2c3e50; padding: 12px; border-radius: 6px; margin-bottom: 15px; }
         h2 { margin: 0 0 10px 0; color: #3498db; font-size: 18px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
         h3 { margin: 5px 0; font-size: 14px; color: #ecf0f1; }
         .flex-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        input[type="text"], input[type="number"] { padding: 10px; border-radius: 4px; border: 1px solid #34495e; background: #1a252f; color: white; font-size: 14px; flex-grow: 1; min-width: 120px; }
-        .btn { background: #e74c3c; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        input[type="text"], input[type="number"] { padding: 10px; border-radius: 4px; border: 1px solid #34495e; background: #1a252f; color: white; font-size: 14px; flex-grow: 1; min-width: 100px; }
+        .btn { background: #e74c3c; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .btn.active { background: #2ecc71; }
         .btn-blue { background: #3498db; }
+        .btn-orange { background: #e67e22; width: 100%; font-size: 15px; height: 45px; margin-top: 5px; }
         
+        /* GIANT SCORING KEYS FOR CONTROLLER SLOTS */
         .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 5px; }
         .btn-group { background: #1a252f; padding: 6px; border-radius: 4px; text-align: center; }
         .btn-group label { display: block; font-size: 10px; color: #bdc3c7; margin-bottom: 3px; font-weight: bold; }
@@ -92,85 +76,91 @@
         .giant-down { width: 100%; height: 32px; font-size: 13px; background: #7f8c8d; color: white; border: none; border-radius: 5px; margin-top: 4px; }
         
         .hidden { display: none !important; }
-        #view-modes { text-align: center; margin-bottom: 15px; padding: 10px; background: #111; border-radius: 6px; }
+        #view-modes { text-align: center; margin-bottom: 15px; padding: 10px; background: #111; border-radius: 6px; display: flex; justify-content: center; gap: 10px; }
     </style>
 </head>
-<body class="mode-overlay">
+<body>
 
+    <!-- Emergency Manual Navigation Mode Selector (Hidden inside PRISM source automatically via CSS url parameters) -->
     <div id="view-modes">
-        <button class="btn btn-blue" onclick="changeLocalMode('overlay')">Overlay Mode</button>
-        <button class="btn btn-blue" onclick="changeLocalMode('remote')">Remote Control Mode</button>
+        <button class="btn btn-blue" onclick="forceMode('overlay')">View PRISM Overlay Layer</button>
+        <button class="btn btn-blue" onclick="forceMode('remote')">Open Smartphone Remote</button>
     </div>
 
-    <!-- --- LIVE OVERLAY DISPLAY BLOCK (TOP LEFT) --- -->
-    <div id="prism-overlay">
-        <div id="header-row" class="overlay-row"><span id="h-l">FPPBA</span><span id="h-r">Fecha 3</span></div>
-        <div class="overlay-row">
-            <div id="tournament-logo" class="hidden"></div>
-            <div class="teams-container">
-                <div style="display:flex; width:100%;">
-                    <div class="team-wrapper">
-                        <div id="t1-l" class="team-logo hidden"></div>
-                        <div class="team-text"><span id="t1-n" class="team-name">Team 1</span><span id="t1-p" class="team-players">Players 1</span></div>
-                    </div>
-                    <div class="score-boxes">
-                        <div id="t1-m" class="score-box match-box">0</div>
-                        <div id="t1-s1" class="score-box">0</div><div id="t1-s2" class="score-box">0</div><div id="t1-s3" class="score-box">0</div>
-                    </div>
-                </div>
-                <div style="display:flex; width:100%;">
-                    <div class="team-wrapper">
-                        <div id="t2-l" class="team-logo hidden"></div>
-                        <div class="team-text"><span id="t2-n" class="team-name">Team 2</span><span id="t2-p" class="team-players">Players 2</span></div>
-                    </div>
-                    <div class="score-boxes">
-                        <div id="t2-m" class="score-box match-box">0</div>
-                        <div id="t2-s1" class="score-box">0</div><div id="t2-s2" class="score-box">0</div><div id="t2-s3" class="score-box">0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div id="dropline-row" class="overlay-row"><span id="d-l">Necochea</span><span id="d-r">LIVE</span></div>
-    </div>
-
-    <!-- --- DYNAMIC INTERSTITIAL NEXT MATCH CARD (DEAD CENTER) --- -->
-    <div id="next-match-card" class="hidden">
-        <div id="nm-header">Próximo Partido</div>
-        <div id="nm-body">
-            <div class="nm-team-row">
-                <div id="nm-t1n">Team Prep 1</div>
-                <div id="nm-t1p" class="nm-players">Players Prep 1</div>
-            </div>
-            <div class="nm-vs">VS</div>
-            <div class="nm-team-row">
-                <div id="nm-t2n">Team Prep 2</div>
-                <div id="nm-t2p" class="nm-players">Players Prep 2</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- --- PHONE CONTROLLER PANEL --- -->
-    <div id="remote-panel">
-        <h2>Pelota Master Cloud Panel</h2>
+    <!-- MAIN GRAPHICS CONTAINER CANVAS -->
+    <div id="main-wrapper">
         
-        <!-- DISPLAY INTERFACE ROUTER -->
-        <div class="panel-section" style="background:#27ae60;">
-            <h3>Broadcast Screen Layout Switching</h3>
-            <div class="flex-row">
-                <button class="btn active" id="btn-scr-sb" onclick="setBroadcastLayout('scorebug')">Show Scorebug (Top-Left)</button>
-                <button class="btn" id="btn-scr-nm" onclick="setBroadcastLayout('nextbox')">Show Large Next Match Box (Center)</button>
-                <button class="btn" id="btn-scr-hd" onclick="setBroadcastLayout('hideall')">Hide Everything</button>
+        <!-- ELEMENT A: Scorebug (Pinned to top-left) -->
+        <div id="prism-overlay">
+            <div id="header-row" class="overlay-row"><span id="h-l">FPPBA</span><span id="h-r">Fecha 3</span></div>
+            <div class="overlay-row">
+                <div id="tournament-logo" class="hidden"></div>
+                <div class="teams-container">
+                    <div style="display:flex; width:100%;">
+                        <div class="team-wrapper">
+                            <div id="t1-l" class="team-logo hidden"></div>
+                            <div class="team-text"><span id="t1-n" class="team-name">Team 1</span><span id="t1-p" class="team-players">Players 1</span></div>
+                        </div>
+                        <div class="score-boxes">
+                            <div id="t1-m" class="score-box match-box">0</div>
+                            <div id="t1-s1" class="score-box">0</div><div id="t1-s2" class="score-box">0</div><div id="t1-s3" class="score-box">0</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; width:100%;">
+                        <div class="team-wrapper">
+                            <div id="t2-l" class="team-logo hidden"></div>
+                            <div class="team-text"><span id="t2-n" class="team-name">Team 2</span><span id="t2-p" class="team-players">Players 2</span></div>
+                        </div>
+                        <div class="score-boxes">
+                            <div id="t2-m" class="score-box match-box">0</div>
+                            <div id="t2-s1" class="score-box">0</div><div id="t2-s2" class="score-box">0</div><div id="t2-s3" class="score-box">0</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="flex-row" style="margin-top:10px; align-items:center;">
-                <label style="font-size:12px; font-weight:bold;">Graphics Size Scale:</label>
-                <input type="number" id="in-scale" value="1.0" step="0.1" min="0.5" max="2.5" style="max-width:80px;" oninput="pushScale(this.value)">
-                <button class="btn btn-blue" style="background:#e67e22;" onclick="promotePrepToLive()">🔄 Promote Prep Box to Live (0-0)</button>
+            <div id="dropline-row" class="overlay-row"><span id="d-l">Necochea</span><span id="d-r">LIVE</span></div>
+        </div>
+
+        <!-- ELEMENT B: Large Center Interstitial Box (Next Match Screen) -->
+        <div id="big-next-match-box" class="hidden">
+            <div class="big-banner-title">Próximo Partido</div>
+            <div id="big-banner-header-text" class="big-banner-header">Torneo Pelota</div>
+            <div class="big-banner-vs-row">
+                <div class="big-banner-team">
+                    <span id="big-t1-name">Team A</span>
+                    <span id="big-t1-players" class="p-names">Player 1 / Player 2</span>
+                </div>
+                <div style="color:var(--accent-color); font-style: italic; font-size: 22px;">VS</div>
+                <div class="big-banner-team">
+                    <span id="big-t2-name">Team B</span>
+                    <span id="big-t2-players" class="p-names">Player 3 / Player 4</span>
+                </div>
             </div>
         </div>
 
-        <!-- CURRENT LIVE MATCH CONTAINER -->
+    </div>
+
+    <!-- --- PHONE MASTER CONTROLLER INTERFACE --- -->
+    <div id="remote-panel" class="hidden">
+        <h2>Pelota Cloud Control Panel</h2>
+        
+        <!-- ROUTER CAPABILITIES -->
+        <div class="panel-section" style="background:#27ae60;">
+            <h3>Live Broadcast Display Controls</h3>
+            <div class="flex-row">
+                <button class="btn active" id="mode-btn-bug" onclick="changeDisplayLayout('bug')">Show Scorebug Top-Left</button>
+                <button class="btn" id="mode-btn-banner" onclick="changeDisplayLayout('banner')">Show Large Next Match Box</button>
+                <button class="btn" id="mode-btn-hideall" onclick="changeDisplayLayout('hideall')">Hide All Graphics</button>
+            </div>
+            <div class="flex-row" style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius:4px;">
+                <label style="font-size:12px; font-weight:bold; align-self:center;">Graphics Scaling Scale (Size multiplier):</label>
+                <input type="number" id="in-scale" value="1.0" step="0.1" min="0.5" max="2.5" style="max-width: 80px;" oninput="pushScaleFactor(this.value)">
+            </div>
+        </div>
+
+        <!-- LIVE GAME MODIFIERS -->
         <div class="panel-section" style="border-top:4px solid #d4af37;">
-            <h3>Live Scoreboard Metrics (Active Match)</h3>
+            <h3>Live Scorebug Values (Active Match)</h3>
             <div class="flex-row">
                 <button class="btn active" id="cb-h" onclick="toggleVisibility('header-row')">Header</button>
                 <button class="btn" id="cb-tl" onclick="toggleVisibility('tournament-logo')">Tourn Logo</button>
@@ -189,10 +179,12 @@
                 <input type="text" id="in-dl" placeholder="Drop Left" oninput="pushText('d-l', this.value)">
                 <input type="text" id="in-dr" placeholder="Drop Right" oninput="pushText('d-r', this.value)">
             </div>
-            <div class="flex-row"><input type="text" id="in-turl" placeholder="Tournament Logo URL" oninput="pushLogo('tournament-logo', this.value)"></div>
+            <div class="flex-row">
+                <input type="text" id="in-turl" placeholder="Tournament Logo URL" oninput="pushLogo('tournament-logo', this.value)">
+            </div>
 
-            <!-- Team 1 -->
-            <div style="background:#111; padding:8px; border-radius:4px; margin-bottom:8px; border-left:4px solid #2ecc71;">
+            <!-- Team 1 Live Keys -->
+            <div style="background:#111; padding:8px; border-radius:4px; margin-bottom:8px; border-left: 4px solid #2ecc71;">
                 <div class="flex-row">
                     <input type="text" id="in-t1n" placeholder="T1 Name" oninput="pushText('t1-n', this.value)">
                     <input type="text" id="in-t1p" placeholder="T1 Players" oninput="pushText('t1-p', this.value)">
@@ -207,8 +199,8 @@
                 </div>
             </div>
 
-            <!-- Team 2 -->
-            <div style="background:#111; padding:8px; border-radius:4px; border-left:4px solid #e74c3c;">
+            <!-- Team 2 Live Keys -->
+            <div style="background:#111; padding:8px; border-radius:4px; border-left: 4px solid #e74c3c;">
                 <div class="flex-row">
                     <input type="text" id="in-t2n" placeholder="T2 Name" oninput="pushText('t2-n', this.value)">
                     <input type="text" id="in-t2p" placeholder="T2 Players" oninput="pushText('t2-p', this.value)">
@@ -224,138 +216,151 @@
             </div>
         </div>
 
-        <!-- NEXT MATCH PREPARATION STAGE -->
+        <!-- STAGING AND PROMOTION CONTROLLERS -->
         <div class="panel-section" style="border-top: 4px solid #e67e22;">
-            <h3 style="color:#e67e22;">Off-Screen Match Preparation Box</h3>
-            <p style="font-size:11px; margin:0 0 8px 0; color:#bdc3c7;">Fill this out safely during the live game. It will form the big central box, and become the next scoreboard when promoted.</p>
+            <h3 style="color:#e67e22;">Upcoming Match Staging Box</h3>
             <div class="flex-row">
-                <input type="text" id="nxt-t1n" placeholder="Next Team 1 Name" oninput="pushPrep()">
-                <input type="text" id="nxt-t1p" placeholder="Next Team 1 Players" oninput="pushPrep()">
+                <input type="text" id="nxt-hl" placeholder="Next Header (Left)">
+                <input type="text" id="nxt-hr" placeholder="Next Header (Right)">
             </div>
             <div class="flex-row">
-                <input type="text" id="nxt-t2n" placeholder="Next Team 2 Name" oninput="pushPrep()">
-                <input type="text" id="nxt-t2p" placeholder="Next Team 2 Players" oninput="pushPrep()">
+                <input type="text" id="nxt-t1n" placeholder="Next Team 1 Name">
+                <input type="text" id="nxt-t1p" placeholder="Next Team 1 Players">
             </div>
+            <div class="flex-row">
+                <input type="text" id="nxt-t2n" placeholder="Next Team 2 Name">
+                <input type="text" id="nxt-t2p" placeholder="Next Team 2 Players">
+            </div>
+            <button class="btn btn-orange" onclick="promoteStagingToLive()">Promote Prep Box to Live (Resets to 0-0)</button>
         </div>
     </div>
 
     <script>
-        // Real-time synchronization cluster using public gateway channel
+        // --- CENTRAL CONTROLLED DATA SYSTEM ---
         const ably = new Ably.Realtime('xV7w7A.E6f0FA:m17H8N0oY4-P6RsnB8N7y2YvB0f_uA9zK8X4B6O3U1w');
-        const channel = ably.channels.get('pelota-necochea-v3');
+        const channel = ably.channels.get('pelota-necochea');
 
-        let state = {
-            layout: "scorebug", scale: 1.0,
+        let data = {
+            layoutMode: "bug", scale: 1.0,
             live: { "h-l":"FPPBA", "h-r":"Fecha 3", "d-l":"Necochea", "d-r":"LIVE", "t1-n":"Basko Neco 'A'", "t1-p":"Player A / B", "t2-n":"Garmense", "t2-p":"Player C / D", "t1-m":0,"t1-s1":0,"t1-s2":0,"t1-s3":0, "t2-m":0,"t2-s1":0,"t2-s2":0,"t2-s3":0, "v-header-row":true, "v-tournament-logo":false, "v-dropline-row":true, "v-t1-l":false, "v-t2-l":false, "v-box-m":true, "v-box-s1":true, "v-box-s2":true, "v-box-s3":true, "turl":"", "t1l":"", "t2l":"" },
-            prep: { "t1-n":"Next Team A", "t1-p":"Player E / F", "t2-n":"Next Team B", "t2-p":"Player G / H" }
+            nxt: { "h-l":"FPPBA", "h-r":"Fecha 4", "t1-n":"Club Centro", "t1-p":"Player X / Y", "t2-n":"Opponent B", "t2-p":"Player W / Z" }
         };
 
+        // Enforce URL parameter mode parsing
         const urlParams = new URLSearchParams(window.location.search);
-        const urlMode = urlParams.get('mode') || 'overlay';
-        changeLocalMode(urlMode);
+        let currentMode = urlParams.get('mode') || 'overlay';
+        forceMode(currentMode);
 
-        function changeLocalMode(m) {
-            if(m === 'overlay') {
-                document.body.className = "mode-overlay";
+        function forceMode(targetMode) {
+            currentMode = targetMode;
+            if(targetMode === 'overlay') {
+                document.getElementById('main-wrapper').classList.remove('hidden');
+                document.getElementById('remote-panel').classList.add('hidden');
+                document.getElementById('view-modes').style.display = 'none';
+                document.body.style.backgroundColor = 'transparent';
             } else {
-                document.body.className = "mode-remote";
-                setTimeout(loadStateIntoForm, 500);
+                document.getElementById('main-wrapper').classList.add('hidden');
+                document.getElementById('remote-panel').classList.remove('hidden');
+                document.getElementById('view-modes').style.display = 'flex';
+                document.body.style.backgroundColor = '#2c3e50';
+                syncStateToControllerInputs();
             }
         }
 
-        channel.subscribe('sync', (msg) => {
-            state = msg.data;
-            if (document.body.classList.contains('mode-overlay')) {
-                renderOverlay();
+        // Global Realtime Mesh Subscription Network
+        channel.subscribe('update', (message) => {
+            data = message.data;
+            if (currentMode === 'overlay') {
+                renderOverlayOutputs();
             }
         });
 
-        function pushState() { channel.publish('sync', state); }
+        function broadcast() { channel.publish('update', data); }
 
-        function loadStateIntoForm() {
-            let l = state.live;
+        /* --- CONTROL METHOD HANDLERS --- */
+        function pushText(field, val) { data.live[field] = val; broadcast(); }
+        function pushLogo(field, url) { data.live[field === 'tournament-logo' ? 'turl' : field.replace('-','')] = url; data.live['v-'+field] = true; broadcast(); }
+        function changePoints(field, amt) { data.live[field] = Math.max(0, data.live[field] + amt); broadcast(); }
+        function toggleVisibility(id) { data.live['v-'+id] = !data.live['v-'+id]; broadcast(); syncStateToControllerInputs(); }
+        function toggleBoxes(box) { data.live['v-box-'+box] = !data.live['v-box-'+box]; broadcast(); syncStateToControllerInputs(); }
+        function pushScaleFactor(val) { data.scale = parseFloat(val) || 1.0; broadcast(); }
+        
+        function changeDisplayLayout(mode) {
+            data.layoutMode = mode;
+            document.getElementById('mode-btn-bug').classList.toggle('active', mode === 'bug');
+            document.getElementById('mode-btn-banner').classList.toggle('active', mode === 'banner');
+            document.getElementById('mode-btn-hideall').classList.toggle('active', mode === 'hideall');
+            broadcast();
+        }
+
+        function syncStagingObject() {
+            data.nxt["h-l"] = document.getElementById('nxt-hl').value; data.nxt["h-r"] = document.getElementById('nxt-hr').value;
+            data.nxt["t1-n"] = document.getElementById('nxt-t1n').value; data.nxt["t1-p"] = document.getElementById('nxt-t1p').value;
+            data.nxt["t2-n"] = document.getElementById('nxt-t2n').value; data.nxt["t2-p"] = document.getElementById('nxt-t2p').value;
+        }
+
+        function promoteStagingToLive() {
+            syncStagingObject();
+            // Map values over to active frame
+            data.live["h-l"] = data.nxt["h-l"]; data.live["h-r"] = data.nxt["h-r"];
+            data.live["t1-n"] = data.nxt["t1-n"]; data.live["t1-p"] = data.nxt["t1-p"];
+            data.live["t2-n"] = data.nxt["t2-n"]; data.live["t2-p"] = data.nxt["t2-p"];
+            // Reset numerical stats entirely back to zero base metrics
+            data.live["t1-m"] = 0; data.live["t1-s1"] = 0; data.live["t1-s2"] = 0; data.live["t1-s3"] = 0;
+            data.live["t2-m"] = 0; data.live["t2-s1"] = 0; data.live["t2-s2"] = 0; data.live["t2-s3"] = 0;
+            
+            // Clear inputs for the next round sequence optimization
+            data.nxt = { "h-l":"", "h-r":"", "t1-n":"", "t1-p":"", "t2-n":"", "t2-p":"" };
+            broadcast();
+            syncStateToControllerInputs();
+        }
+
+        function syncStateToControllerInputs() {
+            let l = data.live;
             document.getElementById('in-hl').value = l["h-l"]; document.getElementById('in-hr').value = l["h-r"];
             document.getElementById('in-dl').value = l["d-l"]; document.getElementById('in-dr').value = l["d-r"];
             document.getElementById('in-t1n').value = l["t1-n"]; document.getElementById('in-t1p').value = l["t1-p"];
             document.getElementById('in-t2n').value = l["t2-n"]; document.getElementById('in-t2p').value = l["t2-p"];
             document.getElementById('in-turl').value = l["turl"]; document.getElementById('in-t1l').value = l["t1l"]; document.getElementById('in-t2l').value = l["t2l"];
-            document.getElementById('in-scale').value = state.scale;
+            document.getElementById('in-scale').value = data.scale;
+
+            setClass('cb-h', l["v-header-row"]); setClass('cb-tl', l["v-tournament-logo"]); setClass('cb-d', l["v-dropline-row"]);
+            setClass('cb-t1l', l["v-t1-l"]); setClass('cb-t2l', l["v-t2-l"]);
+            setClass('cb-m', l["v-box-m"]); setClass('cb-s1', l["v-box-s1"]); setClass('cb-s2', l["v-box-s2"]); setClass('cb-s3', l["v-box-s3"]);
+
+            let n = data.nxt;
+            document.getElementById('nxt-hl').value = n["h-l"]; document.getElementById('nxt-hr').value = n["h-r"];
+            document.getElementById('nxt-t1n').value = n["t1-n"]; document.getElementById('nxt-t1p').value = n["t1-p"];
+            document.getElementById('nxt-t2n').value = n["t2-n"]; document.getElementById('nxt-t2p').value = n["t2-p"];
+        }
+        function setClass(id, active) { document.getElementById(id).classList.toggle('active', active); }
+
+        /* --- VISUAL RENDERING ENGINES --- */
+        function renderOverlayOutputs() {
+            let activeObj = data.live;
             
-            let p = state.prep;
-            document.getElementById('nxt-t1n').value = p["t1-n"]; document.getElementById('nxt-t1p').value = p["t1-p"];
-            document.getElementById('nxt-t2n').value = p["t2-n"]; document.getElementById('nxt-t2p').value = p["t2-p"];
-
-            updateBtn('btn-scr-sb', state.layout === 'scorebug'); updateBtn('btn-scr-nm', state.layout === 'nextbox'); updateBtn('btn-scr-hd', state.layout === 'hideall');
-            updateBtn('cb-h', l["v-header-row"]); updateBtn('cb-tl', l["v-tournament-logo"]); updateBtn('cb-d', l["v-dropline-row"]);
-            updateBtn('cb-t1l', l["v-t1-l"]); updateBtn('cb-t2l', l["v-t2-l"]);
-            updateBtn('cb-m', l["v-box-m"]); updateBtn('cb-s1', l["v-box-s1"]); updateBtn('cb-s2', l["v-box-s2"]); updateBtn('cb-s3', l["v-box-s3"]);
-        }
-
-        function updateBtn(id, act) { let b = document.getElementById(id); if(b) b.classList.toggle('active', act); }
-        
-        function pushText(f, v) { state.live[f] = v; pushState(); }
-        function pushLogo(f, url) { state.live[f==='tournament-logo'?'turl':f.replace('-','')] = url; state.live['v-'+f] = true; pushState(); }
-        function changePoints(f, a) { state.live[f] = Math.max(0, state.live[f] + a); pushState(); }
-        function toggleVisibility(id) { state.live['v-'+id] = !state.live['v-'+id]; pushState(); loadStateIntoForm(); }
-        function toggleBoxes(b) { state.live['v-box-'+b] = !state.live['v-box-'+b]; pushState(); loadStateIntoForm(); }
-        function pushScale(v) { state.scale = parseFloat(v) || 1.0; pushState(); }
-        
-        function pushPrep() {
-            state.prep["t1-n"] = document.getElementById('nxt-t1n').value; state.prep["t1-p"] = document.getElementById('nxt-t1p').value;
-            state.prep["t2-n"] = document.getElementById('nxt-t2n').value; state.prep["t2-p"] = document.getElementById('nxt-t2p').value;
-            pushState();
-        }
-
-        function setBroadcastLayout(mode) { state.layout = mode; pushState(); loadStateIntoForm(); }
-
-        function promotePrepToLive() {
-            state.live["t1-n"] = state.prep["t1-n"]; state.live["t1-p"] = state.prep["t1-p"];
-            state.live["t2-n"] = state.prep["t2-n"]; state.live["t2-p"] = state.prep["t2-p"];
-            state.live["t1-m"] = 0; state.live["t1-s1"] = 0; state.live["t1-s2"] = 0; state.live["t1-s3"] = 0;
-            state.live["t2-m"] = 0; state.live["t2-s1"] = 0; state.live["t2-s2"] = 0; state.live["t2-s3"] = 0;
-            state.prep = { "t1-n":"", "t1-p":"", "t2-n":"", "t2-p":"" };
-            state.layout = "scorebug";
-            pushState();
-            loadStateIntoForm();
-        }
-
-        function renderOverlay() {
-            document.documentElement.style.setProperty('--scale-factor', state.scale);
-            let l = state.live; let p = state.prep;
-
-            // Update top-left scoreboard elements
-            document.getElementById('h-l').innerText = l["h-l"]; document.getElementById('h-r').innerText = l["h-r"];
-            document.getElementById('d-l').innerText = l["d-l"]; document.getElementById('d-r').innerText = l["d-r"];
-            document.getElementById('t1-n').innerText = l["t1-n"]; document.getElementById('t1-p').innerText = l["t1-p"];
-            document.getElementById('t2-n').innerText = l["t2-n"]; document.getElementById('t2-p').innerText = l["t2-p"];
-            document.getElementById('t1-m').innerText = l["t1-m"]; document.getElementById('t1-s1').innerText = l["t1-s1"];
-            document.getElementById('t1-s2').innerText = l["t1-s2"]; document.getElementById('t1-s3').innerText = l["t1-s3"];
-            document.getElementById('t2-m').innerText = l["t2-m"]; document.getElementById('t2-s1').innerText = l["t2-s1"];
-            document.getElementById('t2-s2').innerText = l["t2-s2"]; document.getElementById('t2-s3').innerText = l["t2-s3"];
-
-            // Update center screen card elements
-            document.getElementById('nm-t1n').innerText = p["t1-n"]; document.getElementById('nm-t1p').innerText = p["t1-p"];
-            document.getElementById('nm-t2n').innerText = p["t2-n"]; document.getElementById('nm-t2p').innerText = p["t2-p"];
-
-            // Structural toggles
-            document.getElementById('header-row').classList.toggle('hidden', !l["v-header-row"]);
-            document.getElementById('tournament-logo').classList.toggle('hidden', !l["v-tournament-logo"]);
-            document.getElementById('dropline-row').classList.toggle('hidden', !l["v-dropline-row"]);
-            document.getElementById('t1-l').classList.toggle('hidden', !l["v-t1-l"]); document.getElementById('t2-l').classList.toggle('hidden', !l["v-t2-l"]);
+            // Map labels
+            document.getElementById('h-l').innerText = activeObj["h-l"]; document.getElementById('h-r').innerText = activeObj["h-r"];
+            document.getElementById('d-l').innerText = activeObj["d-l"]; document.getElementById('d-r').innerText = activeObj["d-r"];
+            document.getElementById('t1-n').innerText = activeObj["t1-n"]; document.getElementById('t1-p').innerText = activeObj["t1-p"];
+            document.getElementById('t2-n').innerText = activeObj["t2-n"]; document.getElementById('t2-p').innerText = activeObj["t2-p"];
             
-            document.getElementById('t1-m').classList.toggle('hidden', !l["v-box-m"]); document.getElementById('t2-m').classList.toggle('hidden', !l["v-box-m"]);
-            document.getElementById('t1-s1').classList.toggle('hidden', !l["v-box-s1"]); document.getElementById('t2-s1').classList.toggle('hidden', !l["v-box-s1"]);
-            document.getElementById('t1-s2').classList.toggle('hidden', !l["v-box-s2"]); document.getElementById('t2-s2').classList.toggle('hidden', !l["v-box-s2"]);
-            document.getElementById('t1-s3').classList.toggle('hidden', !l["v-box-s3"]); document.getElementById('t2-s3').classList.toggle('hidden', !l["v-box-s3"]);
+            // Map scores
+            document.getElementById('t1-m').innerText = activeObj["t1-m"]; document.getElementById('t1-s1').innerText = activeObj["t1-s1"];
+            document.getElementById('t1-s2').innerText = activeObj["t1-s2"]; document.getElementById('t1-s3').innerText = activeObj["t1-s3"];
+            document.getElementById('t2-m').innerText = activeObj["t2-m"]; document.getElementById('t2-s1').innerText = activeObj["t2-s1"];
+            document.getElementById('t2-s2').innerText = activeObj["t2-s2"]; document.getElementById('t2-s3').innerText = activeObj["t2-s3"];
 
-            document.getElementById('tournament-logo').style.backgroundImage = l["turl"] ? `url('${l["turl"]}')` : 'none';
-            document.getElementById('t1-l').style.backgroundImage = l["t1l"] ? `url('${l["t1l"]}')` : 'none';
-            document.getElementById('t2-l').style.backgroundImage = l["t2l"] ? `url('${l["t2l"]}')` : 'none';
+            // Visibilities logic controls
+            toggle('header-row', activeObj["v-header-row"]); toggle('tournament-logo', activeObj["v-tournament-logo"]);
+            toggle('dropline-row', activeObj["v-dropline-row"]); toggle('t1-l', activeObj["v-t1-l"]); toggle('t2-l', activeObj["v-t2-l"]);
+            toggle('t1-m', activeObj["v-box-m"]); toggle('t2-m', activeObj["v-box-m"]);
+            toggle('t1-s1', activeObj["v-box-s1"]); toggle('t2-s1', activeObj["v-box-s1"]);
+            toggle('t1-s2', activeObj["v-box-s2"]); toggle('t2-s2', activeObj["v-box-s2"]);
+            toggle('t1-s3', activeObj["v-box-s3"]); toggle('t2-s3', activeObj["v-box-s3"]);
 
-            // MAIN ROUTER VIEW ENGINE SWITCH
-            if (state.layout === 'scorebug') {
-                document.getElementById('prism-overlay').classList.remove('hidden');
-                document.getElementById('next-match-card').classList.add('hidden');
-            } else if (state.layout === 'nextbox') {
-                document.getElementById('prism-overlay').classList.add('hidden');
-                document
+            // Images asset engines
+            bg('tournament-logo', activeObj["turl"]); bg('t1-l', activeObj["t1l"]); bg('t2-l', activeObj["t2l"]);
+
+            // Sync structural parameters on Large Center Interstitial Banner
+            document.getElementById('big-
