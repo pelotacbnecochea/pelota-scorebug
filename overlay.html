@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Overlay Layer</title>
-    <script src="ably.com"></script>
+    <script src="https://cdn.ably.com/lib/ably.min.js"></script>
     <style>
         :root { --bg1: #111; --bg2: #1a1a1a; --text1: #fff; --text2: #aaa; --accent: #d4af37; --box: #222; }
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: transparent; overflow: hidden; color: #fff; }
-        #prism-overlay { position: absolute; top: 20px; left: 20px; width: 550px; display: flex; flex-direction: column; font-weight: bold; transform-origin: top left; transition: transform 0.2s ease; }
+        #prism-overlay { position: absolute; top: 20px; left: 20px; width: 450px; display: flex; flex-direction: column; font-weight: bold; transform-origin: top left; transition: transform 0.2s ease; }
         .row { display: flex; align-items: stretch; background: var(--bg1); color: var(--text1); overflow: hidden; }
         #h-row { background: var(--bg2); color: var(--accent); font-size: 13px; text-transform: uppercase; padding: 6px 12px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); }
         #t-logo { width: 45px; background: var(--bg2); border-right: 1px solid rgba(255,255,255,0.1); background-size: contain; background-repeat: no-repeat; background-position: center; }
@@ -43,7 +43,6 @@
                         <div class="t-txt"><span id="t1n" class="t-name">Team 1</span><span id="t1p" class="t-play">Players 1</span></div>
                     </div>
                     <div class="s-boxes">
-                        <div id="t1m" class="s-box m-box">0</div>
                         <div id="t1s1" class="s-box">0</div><div id="t1s2" class="s-box">0</div><div id="t1s3" class="s-box">0</div>
                     </div>
                 </div>
@@ -53,7 +52,6 @@
                         <div class="t-txt"><span id="t2n" class="t-name">Team 2</span><span id="t2p" class="t-play">Players 2</span></div>
                     </div>
                     <div class="s-boxes">
-                        <div id="t2m" class="s-box m-box">0</div>
                         <div id="t2s1" class="s-box">0</div><div id="t2s2" class="s-box">0</div><div id="t2s3" class="s-box">0</div>
                     </div>
                 </div>
@@ -65,15 +63,17 @@
     <div id="next-box" class="hidden">
         <div id="next-title">Próximo Partido</div>
         <div class="next-team-row"><div id="nx-t1n" class="next-team-name">-</div><div id="nx-t1p" class="next-team-players">-</div></div>
-        <div class="vs-divider">A CONTINUACIÓN VS</div>
+        <div class="vs-divider">VS</div>
         <div class="next-team-row"><div id="nx-t2n" class="next-team-name">-</div><div id="nx-t2p" class="next-team-players">-</div></div>
     </div>
 
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('auth') !== '7630'){window.location.href='index.html';}
         const ably = new Ably.Realtime('0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY');
         const chan = ably.channels.get('p-neco');
-        chan.subscribe('u', function(m) {
-            const s = m.data;
+        
+        function updateOverlay(s) {
             document.getElementById('prism-overlay').style.transform = 'scale(' + s.scale + ')';
             document.getElementById('prism-overlay').classList.toggle('hidden', s.route !== 'sb');
             document.getElementById('next-box').classList.toggle('hidden', s.route !== 'nx');
@@ -82,16 +82,15 @@
                 document.getElementById('dl').innerText = s.dl; document.getElementById('dr').innerText = s.dr;
                 document.getElementById('t1n').innerText = s.t1n; document.getElementById('t1p').innerText = s.t1p;
                 document.getElementById('t2n').innerText = s.t2n; document.getElementById('t2p').innerText = s.t2p;
-                document.getElementById('t1m').innerText = s.t1m; document.getElementById('t1s1').innerText = s.t1s1;
+                document.getElementById('t1s1').innerText = s.t1s1;
                 document.getElementById('t1s2').innerText = s.t1s2; document.getElementById('t1s3').innerText = s.t1s3;
-                document.getElementById('t2m').innerText = s.t2m; document.getElementById('t2s1').innerText = s.t2s1;
+                document.getElementById('t2s1').innerText = s.t2s1;
                 document.getElementById('t2s2').innerText = s.t2s2; document.getElementById('t2s3').innerText = s.t2s3;
                 document.getElementById('h-row').classList.toggle('hidden', !s.vh);
                 document.getElementById('t-logo').classList.toggle('hidden', !s.vt);
                 document.getElementById('d-row').classList.toggle('hidden', !s.vd);
                 document.getElementById('t1l').classList.toggle('hidden', !s.v1);
                 document.getElementById('t2l').classList.toggle('hidden', !s.v2);
-                document.getElementById('t1m').classList.toggle('hidden', !s.bm); document.getElementById('t2m').classList.toggle('hidden', !s.bm);
                 document.getElementById('t1s1').classList.toggle('hidden', !s.bs1); document.getElementById('t2s1').classList.toggle('hidden', !s.bs1);
                 document.getElementById('t1s2').classList.toggle('hidden', !s.bs2); document.getElementById('t2s2').classList.toggle('hidden', !s.bs2);
                 document.getElementById('t1s3').classList.toggle('hidden', !s.bs3); document.getElementById('t2s3').classList.toggle('hidden', !s.bs3);
@@ -104,6 +103,14 @@
                 document.getElementById('nx-t2n').innerText = s.nt2n || 'Por Determinar';
                 document.getElementById('nx-t2p').innerText = s.nt2p || 'Jugadores';
             }
+        }
+        
+        // Default state
+        const defaultState = { route:'sb',scale:'1.0',hl:'FPPBA',hr:'Fecha 3',dl:'Necochea',dr:'LIVE',t1n:'Team 1',t1p:'Players 1',t2n:'Team 2',t2p:'Players 2',t1s1:0,t1s2:0,t1s3:0,t2s1:0,t2s2:0,t2s3:0,vh:true,vt:false,vd:true,v1:false,v2:false,bs1:false,bs2:false,bs3:false,tu:'',t1l:'',t2l:'' };
+        updateOverlay(defaultState);
+        
+        chan.subscribe('u', function(m) {
+            updateOverlay(m.data);
         });
     </script>
 </body>

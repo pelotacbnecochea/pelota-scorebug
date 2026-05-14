@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pelota Control Gateway</title>
+    <title>Enlace del Tanteador de Pelota</title>
     <style>
         body { font-family: Arial, sans-serif; background: #2c3e50; color: #fff; text-align: center; padding: 50px 20px; margin: 0; }
         .box { background: #1a252f; max-width: 400px; margin: 0 auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
@@ -15,14 +15,14 @@
 </head>
 <body>
     <div class="box">
-        <h2>🔒 Tournament Authorization</h2>
-        <p>Enter password to unlock streaming links:</p>
+        <h2>🔒  Tanteador de Pelota Paleta</h2>
+        <p>Introduce la contraseña para desbloquear los enlaces de transmisión:</p>
         <input type="password" id="pass-field" placeholder="••••" oninput="checkAuth()">
-        <div id="err">Incorrect Password</div>
+        <div id="err">Contraseña Incorrecta</div>
         
         <!-- Real HTML Links that allow middle-click/new-tab natively -->
-        <a id="lnk-overlay" class="btn-link" href="overlay.html?auth=7630">🎥 Open PRISM Overlay Layer</a>
-        <a id="lnk-remote" class="btn-link" href="remote.html?auth=7630" style="background:#2ecc71;">📱 Open Phone Remote Panel</a>
+        <a id="lnk-overlay" class="btn-link" href="overlay.html?auth=7630">🎥 Abrir Overlay de PRISM Video</a>
+        <a id="lnk-remote" class="btn-link" href="remote.html?auth=7630" style="background:#2ecc71;">📱 Abrir Panel de Control Móvil</a>
     </div>
 
     <script>
@@ -37,10 +37,12 @@
                     err.style.display = "none";
                     l1.style.display = "block";
                     l2.style.display = "block";
+                    localStorage.setItem('auth_7630', 'true');
                 } else {
                     err.style.display = "block";
                     l1.style.display = "none";
                     l2.style.display = "none";
+                    localStorage.removeItem('auth_7630');
                 }
             }
         }

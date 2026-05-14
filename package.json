@@ -1,0 +1,18 @@
+{
+  "name": "pelota-scorebug",
+  "version": "1.0.0",
+  "description": "Live streaming overlay widget for Pelota matches with remote control using Ably real-time messaging.",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 8080 -c-1",
+    "dev": "http-server -p 8080 -c-1 --cors"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": ["overlay", "live-streaming", "scorebug", "remote-control", "ably"],
+  "author": "",
+  "license": "ISC"
+}</content>
+<parameter name="filePath">c:\Users\Diego\OneDrive\Workspace\pelota-scorebug\package.json
