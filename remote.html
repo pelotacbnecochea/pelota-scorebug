@@ -1,374 +1,1008 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
+    />
     <title>Remote</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+    <script src="default-state.js"></script>
     <style>
-        body{font-family:Arial;margin:0;padding:6px;background:#1a252f;color:#fff;box-sizing:border-box}
-        .sect{background:#2c3e50;padding:8px;border-radius:6px;margin-bottom:8px}
-        h2{margin:0 0 6px 0;font-size:13px;color:#3498db;border-bottom:2px solid #3498db;padding-bottom:2px;text-transform:uppercase}
-        .f-row{display:flex;gap:4px;margin-bottom:5px;flex-wrap:wrap}
-        input[type="text"]{padding:8px;border-radius:4px;border:1px solid #34495e;background:#111;color:#fff;font-size:13px;flex-grow:1;min-width:90px;box-sizing:border-box}
-        .btn{background:#e74c3c;color:#fff;border:none;padding:10px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;flex-grow:1;text-align:center}
-        .btn.active{background:#2ecc71}
-        .g-4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:4px}
-        .b-grp{background:#111;padding:4px;border-radius:4px;text-align:center;border:1px solid #34495e}
-        .b-grp label{display:block;font-size:9px;color:#bdc3c7;margin-bottom:2px;font-weight:bold}
-        .g-up{width:100%;height:45px;font-size:20px;font-weight:bold;background:#2ecc71;color:#fff;border:none;border-radius:4px}
-        .g-down{width:100%;height:26px;font-size:11px;background:#7f8c8d;color:#fff;border:none;border-radius:4px;margin-top:3px}
-        .p-btn{background:#d35400;color:#fff;width:100%;padding:10px;font-size:12px;font-weight:bold;border:none;border-radius:4px;cursor:pointer;margin-top:4px;text-transform:uppercase}
-        #pview{background:#111;padding:6px;border-radius:4px;font-size:10px;border-left:3px solid #d4af37;overflow:hidden;transform-origin:top left}
-        :root{--bg1:#111;--bg2:#1a1a1a;--text1:#fff;--text2:#aaa;--accent:#d4af37;--box:#222}
-        .preview-overlay{position:relative;width:330px;height:140px;background:transparent;margin:0;padding:0;font-weight:bold;display:inline-block}
-        .p-row{display:flex;align-items:stretch;background:var(--bg1);color:var(--text1);overflow:hidden}
-        .p-h-row{background:var(--bg2);color:var(--accent);font-size:9px;text-transform:uppercase;padding:4px 8px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1)}
-        .p-t-logo{width:30px;background:var(--bg2);border-right:1px solid rgba(255,255,255,0.1);background-size:contain;background-repeat:no-repeat;background-position:center}
-        .p-t-container{flex-grow:1;display:flex;flex-direction:column}
-        .p-t-wrap{flex-grow:1;display:flex;align-items:center;padding:3px 8px;height:25px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px}
-        .p-t-img{width:20px;height:20px;margin-right:6px;background-size:contain;background-repeat:no-repeat;background-position:center}
-        .p-t-txt{display:flex;flex-direction:column}
-        .p-t-name{font-size:12px}
-        .p-t-play{font-size:8px;color:var(--text2);font-weight:normal;margin-top:0px}
-        .p-s-boxes{display:flex}
-        .p-s-box{width:28px;display:flex;align-items:center;justify-content:center;font-size:12px;background:var(--box);border-left:1px solid rgba(255,255,255,0.1);font-weight:bold}
-        .p-m-box{background:var(--bg2);color:var(--accent);border-right:2px solid var(--accent)}
-        .p-d-row{background:var(--bg2);font-size:8px;padding:3px 8px;display:flex;justify-content:space-between;color:var(--text2);border-top:1px solid rgba(255,255,255,0.1)}
-        .p-hidden{display:none !important}
-        .preview-next-box{position:relative;width:330px;background:rgba(17,17,17,0.98);border:2px solid var(--accent);padding:15px;border-radius:8px;text-align:center;box-sizing:border-box;display:none}
-        .p-next-title{font-size:14px;color:var(--accent);text-transform:uppercase;margin-bottom:12px;letter-spacing:1px;border-bottom:1px solid #333;padding-bottom:8px}
-        .p-next-team-row{margin:10px 0}
-        .p-next-team-name{font-size:18px;font-weight:bold;color:#fff}
-        .p-next-team-players{font-size:12px;color:var(--text2);margin-top:2px}
-        .p-vs-divider{font-size:10px;color:var(--accent);font-weight:bold;margin:8px 0;letter-spacing:1px}
+      body {
+        font-family: Arial;
+        margin: 0;
+        padding: 6px;
+        background: #1a252f;
+        color: #fff;
+        box-sizing: border-box;
+      }
+
+      .sect {
+        background: #2c3e50;
+        padding: 8px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        margin: 0 0 6px 0;
+        font-size: 13px;
+        color: #3498db;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 2px;
+        text-transform: uppercase;
+      }
+
+      .f-row {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+      }
+
+      input[type="text"] {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #34495e;
+        background: #111;
+        color: #fff;
+        font-size: 13px;
+        flex-grow: 1;
+        min-width: 90px;
+        box-sizing: border-box;
+      }
+
+      .btn {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 12px;
+        flex-grow: 1;
+        text-align: center;
+        transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+      }
+
+      .btn:hover,
+      .g-up:hover,
+      .g-down:hover,
+      .p-btn:hover {
+        filter: brightness(1.05);
+      }
+
+      .btn:active,
+      .g-up:active,
+      .g-down:active,
+      .p-btn:active {
+        transform: translateY(1px);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn.active {
+        background: #2ecc71;
+      }
+
+      .g-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      .g-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      .score-cell {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .b-grp {
+        background: #111;
+        padding: 4px;
+        border-radius: 4px;
+        text-align: center;
+        border: 1px solid #34495e;
+        flex: 1;
+      }
+
+      .count {
+        min-width: 28px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        background: #222;
+        color: #f4d03f;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .b-grp label {
+        display: block;
+        font-size: 9px;
+        color: #bdc3c7;
+        margin-bottom: 2px;
+        font-weight: bold;
+      }
+
+      .g-up {
+        width: 100%;
+        height: 45px;
+        font-size: 20px;
+        font-weight: bold;
+        background: #2ecc71;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+      }
+
+      .g-down {
+        width: 100%;
+        height: 26px;
+        font-size: 11px;
+        background: #7f8c8d;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        margin-top: 3px;
+      }
+
+      .p-btn {
+        background: #d35400;
+        color: #fff;
+        width: 100%;
+        padding: 10px;
+        font-size: 12px;
+        font-weight: bold;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 4px;
+        text-transform: uppercase;
+      }
+
+      #pview {
+        background: #111;
+        padding: 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        border-left: 3px solid #d4af37;
+        overflow: hidden;
+        transform-origin: top left;
+        display: inline-block;
+        max-width: 100%;
+      }
+
+      :root {
+        --bg1: #111;
+        --bg2: #1a1a1a;
+        --text1: #fff;
+        --text2: #aaa;
+        --accent: #d4af37;
+        --box: #222;
+      }
+
+      .preview-overlay {
+        position: relative;
+        width: auto;
+        min-width: 250px;
+        background: transparent;
+        margin: 0;
+        padding: 0;
+        font-weight: bold;
+        display: inline-flex;
+        flex-direction: column;
+      }
+
+      .p-row {
+        display: flex;
+        align-items: stretch;
+        background: var(--bg1);
+        color: var(--text1);
+        overflow: hidden;
+      }
+
+      .p-h-row {
+        background: var(--bg2);
+        color: var(--accent);
+        font-size: 9px;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .p-t-logo {
+        width: auto;
+        min-width: 32px;
+        flex: none;
+        align-self: stretch;
+        aspect-ratio: 1 / 1;
+        background: var(--bg2);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      .p-t-container {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .p-t-wrap {
+        display: flex;
+        align-items: center;
+        padding: 3px 8px;
+        height: 25px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 11px;
+      }
+
+      .p-score-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-left: 8px;
+      }
+
+      .p-t-img {
+        width: 20px;
+        height: 20px;
+        margin-right: 6px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      .p-t-txt {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .p-t-name {
+        font-size: 12px;
+      }
+
+      .p-t-play {
+        font-size: 8px;
+        color: var(--text2);
+        font-weight: normal;
+        margin-top: 0px;
+      }
+
+      .p-s-boxes {
+        display: flex;
+      }
+
+      .p-s-box {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        background: var(--box);
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: bold;
+      }
+
+      .p-m-box {
+        background: var(--bg2);
+        color: var(--accent);
+        border-right: 2px solid var(--accent);
+      }
+
+      .p-d-row {
+        background: var(--bg2);
+        font-size: 8px;
+        padding: 3px 8px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        color: var(--text2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .p-hidden {
+        display: none !important;
+      }
+
+      .count {
+        display: inline-block;
+        margin-left: 4px;
+        font-size: 10px;
+        color: #f4d03f;
+        font-weight: normal;
+      }
+
+      .preview-next-box {
+        position: relative;
+        width: 330px;
+        background: rgba(17, 17, 17, 0.98);
+        border: 2px solid var(--accent);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        box-sizing: border-box;
+        display: none;
+      }
+
+      .p-next-title {
+        font-size: 14px;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 8px;
+      }
+
+      .p-next-team-row {
+        margin: 10px 0;
+      }
+
+      .p-next-team-name {
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+      }
+
+      .p-next-team-players {
+        font-size: 12px;
+        color: var(--text2);
+        margin-top: 2px;
+      }
+
+      .p-vs-divider {
+        font-size: 10px;
+        color: var(--accent);
+        font-weight: bold;
+        margin: 8px 0;
+        letter-spacing: 1px;
+      }
     </style>
-</head>
-<body>
-    <div class="sect" style="background:#111;border:1px solid #d4af37">
-        <h2>👁️ Live Stream Preview Box</h2>
-        <div id="pview" style="overflow-x:auto;background:#000;padding:4px;border-radius:4px">
-            <div id="preview-scorebug" class="preview-overlay">
-                <div class="p-h-row p-row"><span id="p-hl">FPPBA</span><span id="p-hr">Fecha 3</span></div>
-                <div class="p-row" style="flex:1">
-                    <div id="p-t-logo" class="p-t-logo p-hidden"></div>
-                    <div class="p-t-container">
-                        <div style="display:flex;width:100%">
-                            <div class="p-t-wrap">
-                                <div id="p-t1l" class="p-t-img p-hidden"></div>
-                                <div class="p-t-txt"><span id="p-t1n" class="p-t-name">Team 1</span><span id="p-t1p" class="p-t-play">Players 1</span></div>
-                            </div>
-                            <div class="p-s-boxes">
-                                <div id="p-t1s1" class="p-s-box">0</div><div id="p-t1s2" class="p-s-box">0</div><div id="p-t1s3" class="p-s-box">0</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;width:100%">
-                            <div class="p-t-wrap">
-                                <div id="p-t2l" class="p-t-img p-hidden"></div>
-                                <div class="p-t-txt"><span id="p-t2n" class="p-t-name">Team 2</span><span id="p-t2p" class="p-t-play">Players 2</span></div>
-                            </div>
-                            <div class="p-s-boxes">
-                                <div id="p-t2s1" class="p-s-box">0</div><div id="p-t2s2" class="p-s-box">0</div><div id="p-t2s3" class="p-s-box">0</div>
-                            </div>
-                        </div>
-                    </div>
+  </head>
+
+  <body>
+    <div class="sect" style="background: #111; border: 1px solid #d4af37">
+      <h2>👁️ Live Stream Preview Box</h2>
+      <div
+        id="pview"
+        style="
+          overflow-x: auto;
+          background: #000;
+          padding: 4px;
+          border-radius: 4px;
+        "
+      >
+        <div id="preview-scorebug" class="preview-overlay">
+          <div class="p-h-row p-row">
+            <span id="p-hl">Header 1</span>
+            <span id="p-hr">Header 2</span>
+          </div>
+          <div class="p-row" style="flex: 1">
+            <div id="p-t-logo" class="p-t-logo p-hidden"></div>
+            <div class="p-t-container">
+              <div class="p-t-wrap">
+                <div id="p-t1l" class="p-t-img p-hidden"></div>
+                <div class="p-t-txt">
+                  <span id="p-t1n" class="p-t-name">Team 1</span
+                  ><span id="p-t1p" class="p-t-play">Players 1</span>
                 </div>
-                <div class="p-d-row p-row"><span id="p-dl">Necochea</span><span id="p-dr">LIVE</span></div>
+              </div>
+              <div class="p-t-wrap">
+                <div id="p-t2l" class="p-t-img p-hidden"></div>
+                <div class="p-t-txt">
+                  <span id="p-t2n" class="p-t-name">Team 2</span
+                  ><span id="p-t2p" class="p-t-play">Players 2</span>
+                </div>
+              </div>
             </div>
-            <div id="preview-nextbox" class="preview-next-box">
-                <div class="p-next-title">Próximo Partido</div>
-                <div class="p-next-team-row"><div id="p-nx-t1n" class="p-next-team-name">-</div><div id="p-nx-t1p" class="p-next-team-players">-</div></div>
-                <div class="p-vs-divider">VS</div>
-                <div class="p-next-team-row"><div id="p-nx-t2n" class="p-next-team-name">-</div><div id="p-nx-t2p" class="p-next-team-players">-</div></div>
+            <div class="p-score-panel">
+              <div class="p-s-boxes">
+                <div id="p-t1s1" class="p-s-box">0</div>
+                <div id="p-t1s2" class="p-s-box">0</div>
+                <div id="p-t1s3" class="p-s-box">0</div>
+              </div>
+              <div class="p-s-boxes">
+                <div id="p-t2s1" class="p-s-box">0</div>
+                <div id="p-t2s2" class="p-s-box">0</div>
+                <div id="p-t2s3" class="p-s-box">0</div>
+              </div>
             </div>
+          </div>
+          <div class="p-d-row p-row">
+            <span id="p-dl">Dropline 1</span>
+            <span id="p-dr">Dropline 2</span>
+          </div>
         </div>
+        <div id="preview-nextbox" class="preview-next-box">
+          <div class="p-next-title">Próximo Partido</div>
+          <div class="p-next-team-row">
+            <div id="p-nx-t1n" class="p-next-team-name">-</div>
+            <div id="p-nx-t1p" class="p-next-team-players">-</div>
+          </div>
+          <div class="p-vs-divider">vs</div>
+          <div class="p-next-team-row">
+            <div id="p-nx-t2n" class="p-next-team-name">-</div>
+            <div id="p-nx-t2p" class="p-next-team-players">-</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="sect" style="background:#27ae60">
-        <h2>🎛️ Router</h2>
-        <div class="f-row">
-            <button class="btn" id="r-sb" onclick="setR('sb')">Scorebug</button>
-            <button class="btn" id="r-nx" onclick="setR('nx')">Next Box</button>
-            <button class="btn" id="r-hd" onclick="setR('hd')">Hide All</button>
-        </div>
-        <button class="p-btn" onclick="prom()">💥 Promote Prep to Live (Resets 0-0)</button>
+    <div class="sect" style="background: #27ae60">
+      <h2>🎛️ Router</h2>
+      <div class="f-row">
+        <button class="btn" id="r-sb" onclick="setR('sb')">Scorebug</button>
+        <button class="btn" id="r-nx" onclick="setR('nx')">Next Box</button>
+        <button class="btn" id="r-hd" onclick="setR('hd')">Hide All</button>
+      </div>
+      <button class="p-btn" onclick="prom()">
+        💥 Promote Prep to Live (Resets 0-0)
+      </button>
     </div>
 
     <div class="sect">
-        <h2>⚙️ Config</h2>
-        <div class="f-row">
-            <button class="btn" id="cb-h" onclick="togV('vh')">Header</button>
-            <button class="btn" id="cb-tl" onclick="togV('vt')">T-Logo</button>
-            <button class="btn" id="cb-d" onclick="togV('vd')">Dropline</button>
-        </div>
-        <div class="f-row">
-            <button class="btn" id="cb-s1" onclick="togB('s1')">S1</button>
-            <button class="btn" id="cb-s2" onclick="togB('s2')">S2</button>
-            <button class="btn" id="cb-s3" onclick="togB('s3')">S3</button>
-        </div>
-        <div style="background:#333;padding:8px;border-radius:4px;margin:8px 0">
-            <h3 style="margin:0 0 8px 0;font-size:12px;color:#aaa">Score Management</h3>
-            <div class="g-4">
-                <div class="b-grp"><label>T1 SET 1</label><button class="g-up" onclick="pPt('t1s1',1)">+</button><button class="g-down" onclick="pPt('t1s1',-1)">-</button></div>
-                <div class="b-grp"><label>T1 SET 2</label><button class="g-up" onclick="pPt('t1s2',1)">+</button><button class="g-down" onclick="pPt('t1s2',-1)">-</button></div>
-                <div class="b-grp"><label>T1 SET 3</label><button class="g-up" onclick="pPt('t1s3',1)">+</button><button class="g-down" onclick="pPt('t1s3',-1)">-</button></div>
-                <div class="b-grp"><label></label><button style="opacity:0;cursor:default">+</button><button style="opacity:0;cursor:default">-</button></div>
+      <h2>⚙️ Config</h2>
+      <div class="f-row">
+        <button class="btn" id="cb-h" onclick="togV('vh')">Header</button>
+        <button class="btn" id="cb-tl" onclick="togV('vt')">T-Logo</button>
+        <button class="btn" id="cb-d" onclick="togV('vd')">Dropline</button>
+      </div>
+      <div class="f-row">
+        <button class="btn" id="cb-s1" onclick="togB('s1')">S1</button>
+        <button class="btn" id="cb-s2" onclick="togB('s2')">S2</button>
+        <button class="btn" id="cb-s3" onclick="togB('s3')">S3</button>
+      </div>
+      <div
+        style="
+          background: #333;
+          padding: 8px;
+          border-radius: 4px;
+          margin: 8px 0;
+        "
+      >
+        <h3 style="margin: 0 0 8px 0; font-size: 12px; color: #aaa">
+          Score Management
+        </h3>
+        <div class="g-3">
+          <div class="score-cell">
+            <div class="b-grp">
+              <label>T1 SET 1</label>
+              <button class="g-up" onclick="pPt('t1s1', 1)">+</button>
+              <button class="g-down" onclick="pPt('t1s1', -1)">-</button>
             </div>
-            <div class="g-4" style="margin-top:8px">
-                <div class="b-grp"><label>T2 SET 1</label><button class="g-up" onclick="pPt('t2s1',1)">+</button><button class="g-down" onclick="pPt('t2s1',-1)">-</button></div>
-                <div class="b-grp"><label>T2 SET 2</label><button class="g-up" onclick="pPt('t2s2',1)">+</button><button class="g-down" onclick="pPt('t2s2',-1)">-</button></div>
-                <div class="b-grp"><label>T2 SET 3</label><button class="g-up" onclick="pPt('t2s3',1)">+</button><button class="g-down" onclick="pPt('t2s3',-1)">-</button></div>
-                <div class="b-grp"><label></label><button style="opacity:0;cursor:default">+</button><button style="opacity:0;cursor:default">-</button></div>
+            <div id="count-t1s1" class="count">0</div>
+          </div>
+          <div class="score-cell">
+            <div class="b-grp">
+              <label>T1 SET 2</label>
+              <button class="g-up" onclick="pPt('t1s2', 1)">+</button>
+              <button class="g-down" onclick="pPt('t1s2', -1)">-</button>
             </div>
+            <div id="count-t1s2" class="count">0</div>
+          </div>
+          <div class="score-cell">
+            <div class="b-grp">
+              <label>T1 SET 3</label>
+              <button class="g-up" onclick="pPt('t1s3', 1)">+</button>
+              <button class="g-down" onclick="pPt('t1s3', -1)">-</button>
+            </div>
+            <div id="count-t1s3" class="count">0</div>
+          </div>
         </div>
-        <div class="f-row">
-            <!--input type="text" id="scale" placeholder="Scale (e.g. 1.0)" oninput="pSc(this.value)"-->
+        <div class="g-3" style="margin-top: 8px">
+          <div class="score-cell">
+            <div class="b-grp">
+              <label>T2 SET 1</label>
+              <button class="g-up" onclick="pPt('t2s1', 1)">+</button>
+              <button class="g-down" onclick="pPt('t2s1', -1)">-</button>
+            </div>
+            <div id="count-t2s1" class="count">0</div>
+          </div>
+          <div class="score-cell">
+            <div class="b-grp">
+              <label>T2 SET 2</label>
+              <button class="g-up" onclick="pPt('t2s2', 1)">+</button>
+              <button class="g-down" onclick="pPt('t2s2', -1)">-</button>
+            </div>
+            <div id="count-t2s2" class="count">0</div>
+          </div>
+          <div class="score-cell">
+            <div class="b-grp">
+              <label>T2 SET 3</label>
+              <button class="g-up" onclick="pPt('t2s3', 1)">+</button>
+              <button class="g-down" onclick="pPt('t2s3', -1)">-</button>
+            </div>
+            <div id="count-t2s3" class="count">0</div>
+          </div>
         </div>
-        <div class="control-group">
-            <label>Tamaño del Overlay:</label>
-            <select id="i-scale" onchange="changeScale(this.value)" class="btn">
-                <option value="0.5">50%</option>
-                <option value="0.75">75%</option>
-                <option value="0.85">85%</option>
-                <option value="1.0">100% (Normal)</option>
-                <option value="1.25">125%</option>
-            </select>
-        </div>
+      </div>
+      <div class="f-row">
+        <!--input type="text" id="scale" placeholder="Scale (e.g. 1.0)" oninput="pSc(this.value)"-->
+      </div>
+      <div class="control-group">
+        <label>Tamaño del Overlay:</label>
+        <select id="i-scale" onchange="changeScale(this.value)" class="btn">
+          <option value="0.5">50%</option>
+          <option value="0.75">75%</option>
+          <option value="0.85">85%</option>
+          <option value="1.0">100% (Normal)</option>
+          <option value="1.25">125%</option>
+        </select>
+      </div>
 
-        <h3 style="margin:12px 0 6px 0;font-size:11px;color:#aaa;text-transform:uppercase">Header & Dropline</h3>
-        <div class="f-row">
-            <input type="text" id="i-hl" placeholder="Head L">
-            <input type="text" id="i-hr" placeholder="Head R">
-        </div>
-        <div class="f-row">
-            <input type="text" id="i-dl" placeholder="Drop L">
-            <input type="text" id="i-dl-val" placeholder="Drop R">
-        </div>
-        <button class="p-btn" style="background:#3498db" onclick="applyConfigText()">✓ Apply Header & Dropline Changes</button>
-        <h3 style="margin:12px 0 6px 0;font-size:11px;color:#aaa;text-transform:uppercase">Tournament Logo</h3>
-        <div class="f-row">
-            <input type="text" id="i-tu" placeholder="Tourn Logo URL" style="width:100%">
-        </div>
-        <button class="p-btn" style="background:#9b59b6" onclick="applyTournLogo()">✓ Apply Logo URL</button>
+      <h3
+        style="
+          margin: 12px 0 6px 0;
+          font-size: 11px;
+          color: #aaa;
+          text-transform: uppercase;
+        "
+      >
+        Header & Dropline
+      </h3>
+      <div class="f-row">
+        <input type="text" id="i-hl" placeholder="Head L" />
+        <input type="text" id="i-hr" placeholder="Head R" />
+      </div>
+      <div class="f-row">
+        <input type="text" id="i-dl" placeholder="Drop L" />
+        <input type="text" id="i-dl-val" placeholder="Drop R" />
+      </div>
+      <button
+        class="p-btn"
+        style="background: #3498db"
+        onclick="applyConfigText()"
+      >
+        ✓ Apply Header & Dropline Changes
+      </button>
+      <h3
+        style="
+          margin: 12px 0 6px 0;
+          font-size: 11px;
+          color: #aaa;
+          text-transform: uppercase;
+        "
+      >
+        Tournament Logo
+      </h3>
+      <div class="f-row">
+        <input
+          type="text"
+          id="i-tu"
+          placeholder="Tourn Logo URL"
+          style="width: 100%"
+        />
+      </div>
+      <button
+        class="p-btn"
+        style="background: #9b59b6"
+        onclick="applyTournLogo()"
+      >
+        ✓ Apply Logo URL
+      </button>
     </div>
 
-    <div class="sect" style="border-left:4px solid #2ecc71">
-        <h2>🟢 Team 1 (Live)</h2>
-        <div class="f-row"><input type="text" id="i-t1n" placeholder="T1 Name"><input type="text" id="i-t1p" placeholder="Players"><button class="btn" id="cb-t1l" onclick="togV('v1')">Logo</button></div>
-        <div class="f-row"><input type="text" id="i-t1l" placeholder="Logo URL" style="width:100%"></div>
+    <div class="sect" style="border-left: 4px solid #2ecc71">
+      <h2>🟢 Team 1 (Live)</h2>
+      <div class="f-row">
+        <input type="text" id="i-t1n" placeholder="T1 Name" /><input
+          type="text"
+          id="i-t1p"
+          placeholder="Players"
+        /><button class="btn" id="cb-t1l" onclick="togV('v1')">Logo</button>
+      </div>
+      <div class="f-row">
+        <input
+          type="text"
+          id="i-t1l"
+          placeholder="Logo URL"
+          style="width: 100%"
+        />
+      </div>
     </div>
 
-    <div class="sect" style="border-left:4px solid #e74c3c">
-        <h2>🔴 Team 2 (Live)</h2>
-        <div class="f-row"><input type="text" id="i-t2n" placeholder="T2 Name"><input type="text" id="i-t2p" placeholder="Players"><button class="btn" id="cb-t2l" onclick="togV('v2')">Logo</button></div>
-        <div class="f-row"><input type="text" id="i-t2l" placeholder="Logo URL" style="width:100%"></div>
-    </div>
-    
-    <div style="padding:0 8px">
-        <button class="p-btn" style="background:#16a085" onclick="applyTeamsText()">✓ Apply All Teams Changes</button>
+    <div class="sect" style="border-left: 4px solid #e74c3c">
+      <h2>🔴 Team 2 (Live)</h2>
+      <div class="f-row">
+        <input type="text" id="i-t2n" placeholder="T2 Name" /><input
+          type="text"
+          id="i-t2p"
+          placeholder="Players"
+        /><button class="btn" id="cb-t2l" onclick="togV('v2')">Logo</button>
+      </div>
+      <div class="f-row">
+        <input
+          type="text"
+          id="i-t2l"
+          placeholder="Logo URL"
+          style="width: 100%"
+        />
+      </div>
     </div>
 
-    <div class="sect" style="border-left:4px solid #e67e22">
-        <h2>🟠 Next Match Prep Box</h2>
-        <div class="f-row"><input type="text" id="n-hl" placeholder="Next Head L"><input type="text" id="n-hr" placeholder="Next Head R"></div>
-        <div class="f-row"><input type="text" id="n-t1n" placeholder="Next T1 Name"><input type="text" id="n-t1p" placeholder="Next T1 Players"></div>
-        <div class="f-row"><input type="text" id="n-t2n" placeholder="Next T2 Name"><input type="text" id="n-t2p" placeholder="Next T2 Players"></div>
-        <button class="p-btn" style="background:#e67e22" onclick="applyNextPrepText()">✓ Apply Next Match Prep Changes</button>
+    <div style="padding: 0 8px">
+      <button
+        class="p-btn"
+        style="background: #16a085"
+        onclick="applyTeamsText()"
+      >
+        ✓ Apply All Teams Changes
+      </button>
+    </div>
+
+    <div class="sect" style="border-left: 4px solid #e67e22">
+      <h2>🟠 Next Match Prep Box</h2>
+      <div class="f-row">
+        <input type="text" id="n-hl" placeholder="Next Head L" /><input
+          type="text"
+          id="n-hr"
+          placeholder="Next Head R"
+        />
+      </div>
+      <div class="f-row">
+        <input type="text" id="n-dl" placeholder="Next Drop L" /><input
+          type="text"
+          id="n-dr"
+          placeholder="Next Drop R"
+        />
+      </div>
+      <div class="f-row">
+        <input type="text" id="n-t1n" placeholder="Next T1 Name" /><input
+          type="text"
+          id="n-t1p"
+          placeholder="Next T1 Players"
+        />
+      </div>
+      <div class="f-row">
+        <input type="text" id="n-t2n" placeholder="Next T2 Name" /><input
+          type="text"
+          id="n-t2p"
+          placeholder="Next T2 Players"
+        />
+      </div>
+      <button
+        class="p-btn"
+        style="background: #e67e22"
+        onclick="applyNextPrepText()"
+      >
+        ✓ Apply Next Match Prep Changes
+      </button>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.get('auth') !== '7630'){document.body.innerHTML='<h1>Denied</h1>';window.location.href='index.html';}
-       
-        const ably = new Ably.Realtime('0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY');
-        const chan = ably.channels.get('p-neco');
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("auth") !== "7630") {
+        document.body.innerHTML = "<h1>Denied</h1>";
+        window.location.href = "index.html";
+      }
 
-        let state = { route:'sb',scale:'1.0',hl:'FPPBA',hr:'Fecha 3',dl:'Necochea',dr:'LIVE',t1n:'Team 1',t1p:'Players 1',t2n:'Team 2',t2p:'Players 2',t1s1:0,t1s2:0,t1s3:0,t2s1:0,t2s2:0,t2s3:0,vh:true,vt:false,vd:true,v1:false,v2:false,bs1:false,bs2:false,bs3:false,tu:'',t1l:'',t2l:'',nhl:'FPPBA',nhr:'Fecha 3',nt1n:'',nt1p:'',nt2n:'',nt2p:'' };
-        
-        chan.subscribe('u', function(m) { 
-            state = m.data; 
-            upd(); 
-        });
-        
-        upd(); // Initial UI update
-        psh(); // Publish initial state
-        
-        function psh() { chan.publish('u', state); }
+      const ably = new Ably.Realtime(
+        "0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY",
+      );
+      const chan = ably.channels.get("p-neco");
+      let state = { ...DEFAULT_STATE };
 
-        function setR(r) { state.route = r; sPr(); psh(); }
-        function pTx(f,v) { state[f]=v; psh(); }
-        function pIm(f,v) { state[f]=v; state['v'+(f==='tu'?'t':f==='t1l'?'1':'2')]=true; psh(); }
-        function pPt(f,a) { state[f]=Math.max(0, state[f]+a); psh(); }
-        function pSc(v) { state.scale = v || '1.0'; psh(); }
-        function togV(f) { state[f]=!state[f]; psh(); }
-        function togB(b) { state['b'+b]=!state['b'+b]; psh(); }
-        function sPr() { state.nhl = document.getElementById('n-hl').value; state.nhr = document.getElementById('n-hr').value; state.nt1n = document.getElementById('n-t1n').value; state.nt1p = document.getElementById('n-t1p').value; state.nt2n = document.getElementById('n-t2n').value; state.nt2p = document.getElementById('n-t2p').value; }
-        
-        function prom() { 
-            state.hl = state.nhl; state.hr = state.nhr; state.t1n = state.nt1n || 'Team 1'; state.t1p = state.nt1p || 'Players 1'; state.t2n = state.nt2n || 'Team 2'; state.t2p = state.nt2p || 'Players 2'; state.t1s1=0; state.t1s2=0; state.t1s3=0; state.t2s1=0; state.t2s2=0; state.t2s3=0; state.nhl='FPPBA'; state.nhr='Fecha 3'; state.nt1n=''; state.nt1p=''; state.nt2n=''; state.nt2p=''; state.route = 'sb'; psh();
-            document.getElementById('i-t1n').value = state.t1n; document.getElementById('i-t1p').value = state.t1p; document.getElementById('i-t2n').value = state.t2n; document.getElementById('i-t2p').value = state.t2p; document.getElementById('n-hl').value = ''; document.getElementById('n-hr').value = ''; document.getElementById('n-t1n').value = ''; document.getElementById('n-t1p').value = ''; document.getElementById('n-t2n').value = ''; document.getElementById('n-t2p').value = ''; upd();
+      function psh() {
+        chan.publish("u", state);
+      }
+
+      function setR(r) {
+        state.route = r;
+        sPr();
+        psh();
+      }
+      function pTx(f, v) {
+        state[f] = v;
+        psh();
+      }
+      function pIm(f, v) {
+        state[f] = v;
+        state["v" + (f === "tu" ? "t" : f === "t1l" ? "1" : "2")] = true;
+        psh();
+      }
+      function pPt(f, a) {
+        state[f] = Math.max(0, state[f] + a);
+        psh();
+      }
+      function pSc(v) {
+        state.scale = v || "1.0";
+        psh();
+      }
+      function togV(f) {
+        state[f] = !state[f];
+        psh();
+      }
+      function togB(b) {
+        state["b" + b] = !state["b" + b];
+        psh();
+      }
+      function sPr() {
+        state.nhl = document.getElementById("n-hl").value;
+        state.nhr = document.getElementById("n-hr").value;
+        state.ndl = document.getElementById("n-dl").value;
+        state.ndr = document.getElementById("n-dr").value;
+        state.nt1n = document.getElementById("n-t1n").value;
+        state.nt1p = document.getElementById("n-t1p").value;
+        state.nt2n = document.getElementById("n-t2n").value;
+        state.nt2p = document.getElementById("n-t2p").value;
+      }
+
+      function prom() {
+        state.hl = state.nhl;
+        state.hr = state.nhr;
+        state.dl = state.ndl;
+        state.dr = state.ndr;
+        state.t1n = state.nt1n;
+        state.t1p = state.nt1p;
+        state.t2n = state.nt2n;
+        state.t2p = state.nt2p;
+        state.t1s1 = 0;
+        state.t1s2 = 0;
+        state.t1s3 = 0; 
+        state.t2s1 = 0;
+        state.t2s2 = 0;
+        state.t2s3 = 0;
+        state.nhl = "FPPBA - 5ta Sudeste - Fecha 2";
+        state.nhr = "16/5/2026";
+        state.ndl = "Centro Basko Necochea";
+        state.ndr = "Z1 - P1";
+        state.nt1n = "";
+        state.nt1p = "";
+        state.nt2n = "";
+        state.nt2p = "";
+        state.route = "sb";
+        psh();
+        document.getElementById("i-t1n").value = state.t1n;
+        document.getElementById("i-t1p").value = state.t1p;
+        document.getElementById("i-t2n").value = state.t2n;
+        document.getElementById("i-t2p").value = state.t2p;
+        document.getElementById("n-hl").value = "";
+        document.getElementById("n-hr").value = "";
+        document.getElementById("n-dl").value = "";
+        document.getElementById("n-dr").value = "";
+        document.getElementById("n-t1n").value = "";
+        document.getElementById("n-t1p").value = "";
+        document.getElementById("n-t2n").value = "";
+        document.getElementById("n-t2p").value = "";
+        upd();
+      }
+
+      function upd() {
+        // 1. Map incoming state scale to your control input field
+        if (document.getElementById("i-scale")) {
+          document.getElementById("i-scale").value = state.scale || "1.0";
         }
-        
-        function upd() { 
-            // 1. Map incoming state scale to your control input field
-            if(document.getElementById('i-scale')) {
-                document.getElementById('i-scale').value = state.scale || '1.0';
-            }
 
-            // 2. Your original input mappings continue here:
-            // Update input field values from state
-            document.getElementById('i-hl').value = state.hl;
-            document.getElementById('i-hr').value = state.hr;
-            document.getElementById('i-dl').value = state.dl;
-            document.getElementById('i-dl-val').value = state.dr;
-            document.getElementById('i-tu').value = state.tu;
-            document.getElementById('i-t1n').value = state.t1n;
-            document.getElementById('i-t1p').value = state.t1p;
-            document.getElementById('i-t1l').value = state.t1l;
-            document.getElementById('i-t2n').value = state.t2n;
-            document.getElementById('i-t2p').value = state.t2p;
-            document.getElementById('i-t2l').value = state.t2l;
-            document.getElementById('n-hl').value = state.nhl;
-            document.getElementById('n-hr').value = state.nhr;
-            document.getElementById('n-t1n').value = state.nt1n;
-            document.getElementById('n-t1p').value = state.nt1p;
-            document.getElementById('n-t2n').value = state.nt2n;
-            document.getElementById('n-t2p').value = state.nt2p;
-            
-            // Update preview based on route
-            const sbPreview = document.getElementById('preview-scorebug');
-            const nxPreview = document.getElementById('preview-nextbox');
-            const pview = document.getElementById('pview');
-            
-            if(state.route === 'hd') {
-                pview.style.display = 'none';
+        // 2. Your original input mappings continue here:
+        // Update input field values from state
+        document.getElementById("i-hl").value = state.hl;
+        document.getElementById("i-hr").value = state.hr;
+        document.getElementById("i-dl").value = state.dl;
+        document.getElementById("i-dl-val").value = state.dr;
+        document.getElementById("i-tu").value = state.tu;
+        document.getElementById("i-t1n").value = state.t1n;
+        document.getElementById("i-t1p").value = state.t1p;
+        document.getElementById("i-t1l").value = state.t1l;
+        document.getElementById("i-t2n").value = state.t2n;
+        document.getElementById("i-t2p").value = state.t2p;
+        document.getElementById("i-t2l").value = state.t2l;
+        document.getElementById("n-hl").value = state.nhl;
+        document.getElementById("n-hr").value = state.nhr;
+        document.getElementById("n-dl").value = state.ndl;
+        document.getElementById("n-dr").value = state.ndr;
+        document.getElementById("n-t1n").value = state.nt1n;
+        document.getElementById("n-t1p").value = state.nt1p;
+        document.getElementById("n-t2n").value = state.nt2n;
+        document.getElementById("n-t2p").value = state.nt2p;
+
+        // Update preview based on route
+        const sbPreview = document.getElementById("preview-scorebug");
+        const nxPreview = document.getElementById("preview-nextbox");
+        const pview = document.getElementById("pview");
+
+        if (state.route === "hd") {
+          pview.style.display = "none";
+        } else {
+          pview.style.display = "block";
+        }
+
+        if (state.route === "nx") {
+          sbPreview.style.display = "none";
+          nxPreview.style.display = "block";
+          document.getElementById("p-nx-t1n").innerText = state.nt1n;
+          document.getElementById("p-nx-t1p").innerText = state.nt1p;
+          document.getElementById("p-nx-t2n").innerText = state.nt2n;
+          document.getElementById("p-nx-t2p").innerText = state.nt2p;
+        } else {
+          sbPreview.style.display = "block";
+          nxPreview.style.display = "none";
+        }
+
+        // Update preview overlay scorebug data
+        document.getElementById("p-hl").innerText = state.hl;
+        document.getElementById("p-hr").innerText = state.hr;
+        document.getElementById("p-dl").innerText = state.dl;
+        document.getElementById("p-dr").innerText = state.dr;
+        document.getElementById("p-t1n").innerText = state.t1n;
+        document.getElementById("p-t1p").innerText = state.t1p;
+        document.getElementById("p-t2n").innerText = state.t2n;
+        document.getElementById("p-t2p").innerText = state.t2p;
+        document.getElementById("p-t1s1").innerText = state.t1s1;
+        document.getElementById("p-t1s2").innerText = state.t1s2;
+        document.getElementById("p-t1s3").innerText = state.t1s3;
+        document.getElementById("p-t2s1").innerText = state.t2s1;
+        document.getElementById("p-t2s2").innerText = state.t2s2;
+        document.getElementById("p-t2s3").innerText = state.t2s3;
+        document.getElementById("count-t1s1").innerText = state.t1s1;
+        document.getElementById("count-t1s2").innerText = state.t1s2;
+        document.getElementById("count-t1s3").innerText = state.t1s3;
+        document.getElementById("count-t2s1").innerText = state.t2s1;
+        document.getElementById("count-t2s2").innerText = state.t2s2;
+        document.getElementById("count-t2s3").innerText = state.t2s3;
+        document
+          .getElementById("p-t-logo")
+          .classList.toggle("p-hidden", !state.vt);
+        document
+          .getElementById("p-t1l")
+          .classList.toggle("p-hidden", !state.v1);
+        document
+          .getElementById("p-t2l")
+          .classList.toggle("p-hidden", !state.v2);
+        document
+          .getElementById("p-t1s1")
+          .classList.toggle("p-hidden", !state.bs1);
+        document
+          .getElementById("p-t2s1")
+          .classList.toggle("p-hidden", !state.bs1);
+        document
+          .getElementById("p-t1s2")
+          .classList.toggle("p-hidden", !state.bs2);
+        document
+          .getElementById("p-t2s2")
+          .classList.toggle("p-hidden", !state.bs2);
+        document
+          .getElementById("p-t1s3")
+          .classList.toggle("p-hidden", !state.bs3);
+        document
+          .getElementById("p-t2s3")
+          .classList.toggle("p-hidden", !state.bs3);
+        document.getElementById("p-t-logo").style.backgroundImage = state.tu
+          ? "url('" + state.tu + "')"
+          : "none";
+        document.getElementById("p-t1l").style.backgroundImage = state.t1l
+          ? "url('" + state.t1l + "')"
+          : "none";
+        document.getElementById("p-t2l").style.backgroundImage = state.t2l
+          ? "url('" + state.t2l + "')"
+          : "none";
+
+        // Update button states
+        document.getElementById("r-sb").className =
+          "btn" + (state.route === "sb" ? " active" : "");
+        document.getElementById("r-nx").className =
+          "btn" + (state.route === "nx" ? " active" : "");
+        document.getElementById("r-hd").className =
+          "btn" + (state.route === "hd" ? " active" : "");
+        document.getElementById("cb-h").className =
+          "btn" + (state.vh ? " active" : "");
+        document.getElementById("cb-tl").className =
+          "btn" + (state.vt ? " active" : "");
+        document.getElementById("cb-d").className =
+          "btn" + (state.vd ? " active" : "");
+        document.getElementById("cb-t1l").className =
+          "btn" + (state.v1 ? " active" : "");
+        document.getElementById("cb-t2l").className =
+          "btn" + (state.v2 ? " active" : "");
+        document.getElementById("cb-s1").className =
+          "btn" + (state.bs1 ? " active" : "");
+        document.getElementById("cb-s2").className =
+          "btn" + (state.bs2 ? " active" : "");
+        document.getElementById("cb-s3").className =
+          "btn" + (state.bs3 ? " active" : "");
+      }
+
+      function changeScale(val) {
+        state.scale = val; // Mutate local state variable
+        psh(); // Broadcast state out to Ably network
+      }
+
+      // Confirm button functions for text changes
+      function applyConfigText() {
+        state.hl = document.getElementById("i-hl").value;
+        state.hr = document.getElementById("i-hr").value;
+        state.dl = document.getElementById("i-dl").value;
+        state.dr = document.getElementById("i-dl-val").value;
+        state.nhl = state.hl;
+        state.nhr = state.hr;
+        state.ndl = state.dl;
+        state.ndr = state.dr;
+        document.getElementById("n-hl").value = state.nhl;
+        document.getElementById("n-hr").value = state.nhr;
+        document.getElementById("n-dl").value = state.ndl;
+        document.getElementById("n-dr").value = state.ndr;
+        psh();
+        upd();
+      }
+
+      function applyTournLogo() {
+        const url = document.getElementById("i-tu").value;
+        state.tu = url;
+        state.vt = !!url;
+        psh();
+        upd();
+      }
+
+      function applyTeamsText() {
+        state.t1n = document.getElementById("i-t1n").value;
+        state.t1p = document.getElementById("i-t1p").value;
+        const logoUrl1 = document.getElementById("i-t1l").value;
+        state.t1l = logoUrl1;
+        state.v1 = !!logoUrl1;
+        state.t2n = document.getElementById("i-t2n").value;
+        state.t2p = document.getElementById("i-t2p").value;
+        const logoUrl2 = document.getElementById("i-t2l").value;
+        state.t2l = logoUrl2;
+        state.v2 = !!logoUrl2;
+        psh();
+        upd();
+      }
+
+      function applyNextPrepText() {
+        state.nhl = document.getElementById("n-hl").value;
+        state.nhr = document.getElementById("n-hr").value;
+        state.ndl = document.getElementById("n-dl").value;
+        state.ndr = document.getElementById("n-dr").value;
+        state.nt1n = document.getElementById("n-t1n").value;
+        state.nt1p = document.getElementById("n-t1p").value;
+        state.nt2n = document.getElementById("n-t2n").value;
+        state.nt2p = document.getElementById("n-t2p").value;
+        psh();
+        upd();
+      }
+
+      // 5. Fire connection events only after DOM is ready and functions are mapped
+      document.addEventListener("DOMContentLoaded", function () {
+        ably.connection.on("connected", function () {
+          console.log("Remote controller connected to Ably.");
+
+          // 1. Fetch the last message sent before this refresh
+          chan.history({ limit: 1 }, function (err, page) {
+            if (!err && page.items.length > 0) {
+              console.log("Restoring previous state from history cache...");
+              state = page.items[0].data;
             } else {
-                pview.style.display = 'block';
+              console.log("No history found, using default shared state.");
+              state = { ...DEFAULT_STATE };
             }
-            
-            if(state.route === 'nx') {
-                sbPreview.style.display = 'none';
-                nxPreview.style.display = 'block';
-                document.getElementById('p-nx-t1n').innerText = state.nt1n || 'Por Determinar';
-                document.getElementById('p-nx-t1p').innerText = state.nt1p || 'Jugadores';
-                document.getElementById('p-nx-t2n').innerText = state.nt2n || 'Por Determinar';
-                document.getElementById('p-nx-t2p').innerText = state.nt2p || 'Jugadores';
-            } else {
-                sbPreview.style.display = 'block';
-                nxPreview.style.display = 'none';
-            }
-            
-            // Update preview overlay scorebug data
-            document.getElementById('p-hl').innerText = state.hl; document.getElementById('p-hr').innerText = state.hr;
-            document.getElementById('p-dl').innerText = state.dl; document.getElementById('p-dr').innerText = state.dr;
-            document.getElementById('p-t1n').innerText = state.t1n; document.getElementById('p-t1p').innerText = state.t1p;
-            document.getElementById('p-t2n').innerText = state.t2n; document.getElementById('p-t2p').innerText = state.t2p;
-            document.getElementById('p-t1s1').innerText = state.t1s1;
-            document.getElementById('p-t1s2').innerText = state.t1s2; document.getElementById('p-t1s3').innerText = state.t1s3;
-            document.getElementById('p-t2s1').innerText = state.t2s1;
-            document.getElementById('p-t2s2').innerText = state.t2s2; document.getElementById('p-t2s3').innerText = state.t2s3;
-            document.getElementById('p-t-logo').classList.toggle('p-hidden', !state.vt);
-            document.getElementById('p-t1l').classList.toggle('p-hidden', !state.v1);
-            document.getElementById('p-t2l').classList.toggle('p-hidden', !state.v2);
-            document.getElementById('p-t1s1').classList.toggle('p-hidden', !state.bs1); document.getElementById('p-t2s1').classList.toggle('p-hidden', !state.bs1);
-            document.getElementById('p-t1s2').classList.toggle('p-hidden', !state.bs2); document.getElementById('p-t2s2').classList.toggle('p-hidden', !state.bs2);
-            document.getElementById('p-t1s3').classList.toggle('p-hidden', !state.bs3); document.getElementById('p-t2s3').classList.toggle('p-hidden', !state.bs3);
-            document.getElementById('p-t-logo').style.backgroundImage = state.tu ? "url('" + state.tu + "')" : 'none';
-            document.getElementById('p-t1l').style.backgroundImage = state.t1l ? "url('" + state.t1l + "')" : 'none';
-            document.getElementById('p-t2l').style.backgroundImage = state.t2l ? "url('" + state.t2l + "')" : 'none';
-            
-            // Update button states
-            document.getElementById('r-sb').className = 'btn' + (state.route==='sb'?' active':''); 
-            document.getElementById('r-nx').className = 'btn' + (state.route==='nx'?' active':''); 
-            document.getElementById('r-hd').className = 'btn' + (state.route==='hd'?' active':''); 
-            document.getElementById('cb-h').className = 'btn' + (state.vh?' active':''); 
-            document.getElementById('cb-tl').className = 'btn' + (state.vt?' active':''); 
-            document.getElementById('cb-d').className = 'btn' + (state.vd?' active':''); 
-            document.getElementById('cb-t1l').className = 'btn' + (state.v1?' active':''); 
-            document.getElementById('cb-t2l').className = 'btn' + (state.v2?' active':''); 
-            document.getElementById('cb-s1').className = 'btn' + (state.bs1?' active':''); 
-            document.getElementById('cb-s2').className = 'btn' + (state.bs2?' active':''); 
-            document.getElementById('cb-s3').className = 'btn' + (state.bs3?' active':''); 
-        }
-        
-        function changeScale(val) {
-            state.scale = val; // Mutate local state variable
-            psh(); // Broadcast state out to Ably network
-        }
-        
-        // Confirm button functions for text changes
-        function applyConfigText() {
-            state.hl = document.getElementById('i-hl').value || state.hl;
-            state.hr = document.getElementById('i-hr').value || state.hr;
-            state.dl = document.getElementById('i-dl').value || state.dl;
-            state.dr = document.getElementById('i-dl-val').value || state.dr;
-            psh(); upd();
-        }
-        
-        function applyTournLogo() {
-            const url = document.getElementById('i-tu').value;
-            if(url) {
-                state.tu = url;
-                state.vt = true;
-                psh(); upd();
-            }
-        }
-        
-        function applyTeamsText() {
-            state.t1n = document.getElementById('i-t1n').value || state.t1n;
-            state.t1p = document.getElementById('i-t1p').value || state.t1p;
-            const logoUrl1 = document.getElementById('i-t1l').value;
-            if(logoUrl1) {
-                state.t1l = logoUrl1;
-                state.v1 = true;
-            }
-            state.t2n = document.getElementById('i-t2n').value || state.t2n;
-            state.t2p = document.getElementById('i-t2p').value || state.t2p;
-            const logoUrl2 = document.getElementById('i-t2l').value;
-            if(logoUrl2) {
-                state.t2l = logoUrl2;
-                state.v2 = true;
-            }
-            psh(); upd();
-        }
-        
-        function applyNextPrepText() {
-            state.nhl = document.getElementById('n-hl').value || state.nhl;
-            state.nhr = document.getElementById('n-hr').value || state.nhr;
-            state.nt1n = document.getElementById('n-t1n').value || state.nt1n;
-            state.nt1p = document.getElementById('n-t1p').value || state.nt1p;
-            state.nt2n = document.getElementById('n-t2n').value || state.nt2n;
-            state.nt2p = document.getElementById('n-t2p').value || state.nt2p;
-            psh(); upd();
-        }
-        
-        // 5. Fire connection events only after DOM is ready and functions are mapped
-        document.addEventListener('DOMContentLoaded', function() {
-    
-            ably.connection.on('connected', function() {
-                console.log("Remote controller connected to Ably.");
-                
-                // 1. Fetch the last message sent before this refresh
-                chan.history({ limit: 1 }, function(err, page) {
-                    if (!err && page.items.length > 0) {
-                        console.log("Restoring previous state from history cache...");
-                        state = page.items[0].data; // Set local state to the saved historical data
-                        upd();                      // Update your inputs with the restored data
-                    } else {
-                        console.log("No history found, starting fresh or waiting for update.");
-                    }
-                    
-                    // 2. Now that history is handled, safely start listening for live changes
-                    chan.subscribe('u', function(m) { 
-                        state = m.data; 
-                        upd(); 
-                    });
-                });
 
+            upd();
+            psh();
+
+            // 2. Now that history is handled, safely start listening for live changes
+            chan.subscribe("u", function (m) {
+              state = m.data;
+              upd();
             });
-            
+          });
         });
-
+      });
     </script>
-</body>
+  </body>
 </html>
