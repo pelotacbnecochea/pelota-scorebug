@@ -46,7 +46,9 @@ A live streaming overlay widget for Pelota matches, featuring a scorebug display
 
 ## Configuration
 
-The Ably API key is hardcoded in the JavaScript. For production use, consider environment variables or secure key management.
+The Ably API key is hardcoded in the JavaScript by default. For production use, consider environment variables or secure key management.
+
+You can override the built-in Ably key at runtime by appending `?ablyKey=YOUR_VALID_KEY` to both `remote.html` and `overlay.html`.
 
 ## Troubleshooting
 

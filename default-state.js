@@ -37,3 +37,7 @@ const DEFAULT_STATE = {
 };
 
 const OVERLAY_DEFAULT_STATE = { ...DEFAULT_STATE };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+  module.exports = DEFAULT_STATE;
+}

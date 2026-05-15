@@ -181,6 +181,7 @@
         transform-origin: top left;
         display: inline-block;
         max-width: 100%;
+        width: 560px;
       }
 
       :root {
@@ -194,7 +195,8 @@
 
       .preview-overlay {
         position: relative;
-        width: auto;
+        width: 560px;
+        max-width: 100%;
         min-width: 250px;
         background: transparent;
         margin: 0;
@@ -331,7 +333,8 @@
 
       .preview-next-box {
         position: relative;
-        width: 330px;
+        width: 560px;
+        max-width: 100%;
         background: rgba(17, 17, 17, 0.98);
         border: 2px solid var(--accent);
         padding: 15px;
@@ -351,8 +354,92 @@
         padding-bottom: 8px;
       }
 
+      .p-next-meta-row,
+      .p-dropline-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 4px;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--text2);
+        min-height: 1.2em;
+      }
+      .p-next-meta-row span,
+      .p-dropline-row span {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .p-next-meta-row span:last-child,
+      .p-dropline-row span:last-child {
+        text-align: right;
+      }
+      .p-resultado-label,
+      .p-next-section-label {
+        display: block;
+        font-size: 10px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+      .p-result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #fff;
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      .p-result-team-name {
+        font-weight: bold;
+        flex: 1;
+        text-align: left;
+      }
+      .p-result-scores {
+        display: inline-flex;
+        gap: 6px;
+        justify-content: flex-end;
+        min-width: 100px;
+      }
+      .p-result-scores span {
+        min-width: 22px;
+        padding: 3px 5px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 3px;
+        font-weight: bold;
+      }
+      .p-next-separator {
+        height: 1px;
+        background: rgba(255,255,255,0.12);
+        margin: 14px 0;
+      }
+      .p-next-section-label {
+        font-size: 10px;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+      .p-next-match-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+      .p-next-match-vs {
+        color: var(--accent);
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
       .p-next-team-row {
-        margin: 10px 0;
+        margin: 0;
       }
 
       .p-next-team-name {
@@ -378,6 +465,9 @@
   </head>
 
   <body>
+    <div id="connection-status" style="margin-bottom: 8px; padding: 8px; border-radius: 6px; background: #333; color: #fff; font-size: 12px;">
+      Ably status: connecting...
+    </div>
     <div class="sect" style="background: #111; border: 1px solid #d4af37">
       <h2>👁️ Live Stream Preview Box</h2>
       <div
@@ -431,15 +521,37 @@
           </div>
         </div>
         <div id="preview-nextbox" class="preview-next-box">
-          <div class="p-next-title">Próximo Partido</div>
-          <div class="p-next-team-row">
-            <div id="p-nx-t1n" class="p-next-team-name">-</div>
-            <div id="p-nx-t1p" class="p-next-team-players">-</div>
+          <div class="p-next-meta-row">
+            <span id="p-nx-nhl">Header left</span>
+            <span id="p-nx-nhr">Header right</span>
           </div>
-          <div class="p-vs-divider">vs</div>
-          <div class="p-next-team-row">
-            <div id="p-nx-t2n" class="p-next-team-name">-</div>
-            <div id="p-nx-t2p" class="p-next-team-players">-</div>
+          <div class="p-resultado-label">Resultado</div>
+          <div class="p-result-row">
+            <span id="p-nx-result-t1" class="p-result-team-name">Team 1</span>
+            <span class="p-result-scores">
+              <span id="p-nx-result-t1s1">0</span>
+              <span id="p-nx-result-t1s2">0</span>
+              <span id="p-nx-result-t1s3">0</span>
+            </span>
+          </div>
+          <div class="p-result-row">
+            <span id="p-nx-result-t2" class="p-result-team-name">Team 2</span>
+            <span class="p-result-scores">
+              <span id="p-nx-result-t2s1">0</span>
+              <span id="p-nx-result-t2s2">0</span>
+              <span id="p-nx-result-t2s3">0</span>
+            </span>
+          </div>
+          <div class="p-next-separator"></div>
+          <div class="p-next-section-label">Próximo Partido</div>
+          <div class="p-next-match-row">
+            <span id="p-nx-t1n">-</span>
+            <span class="p-next-match-vs">vs</span>
+            <span id="p-nx-t2n">-</span>
+          </div>
+          <div class="p-dropline-row">
+            <span id="p-nx-ndl">Dropline left</span>
+            <span id="p-nx-ndr">Dropline right</span>
           </div>
         </div>
       </div>
@@ -693,14 +805,24 @@
         window.location.href = "index.html";
       }
 
-      const ably = new Ably.Realtime(
-        "0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY",
-      );
+      const ABLY_KEY =
+        urlParams.get("ablyKey") ||
+        "0iWGhA.FW3w1g:EMD5WZ2N_sE9rzhKdMJ9im2thlS0IJ5cAcf-WhAlTAw?rewind=1";
+      const ably = new Ably.Realtime({
+        key: ABLY_KEY,
+        clientId: "remote-" + Math.random().toString(36).slice(2),
+      });
       const chan = ably.channels.get("p-neco");
       let state = { ...DEFAULT_STATE };
 
       function psh() {
         chan.publish("u", state);
+        try {
+          localStorage.setItem("pelota-scorebug-state", JSON.stringify(state));
+        } catch (e) {
+          console.warn("Unable to save state to localStorage:", e);
+        }
+        upd();
       }
 
       function setR(r) {
@@ -742,6 +864,40 @@
         state.nt1p = document.getElementById("n-t1p").value;
         state.nt2n = document.getElementById("n-t2n").value;
         state.nt2p = document.getElementById("n-t2p").value;
+      }
+
+      function clampPreviewFont(el, maxSize, minSize) {
+        if (!el) return;
+        el.style.whiteSpace = "nowrap";
+        let size = maxSize;
+        el.style.fontSize = size + "px";
+        while (size > minSize && el.scrollWidth > el.clientWidth) {
+          size -= 1;
+          el.style.fontSize = size + "px";
+        }
+      }
+
+      function fitPreviewText() {
+        [
+          "p-hl",
+          "p-hr",
+          "p-dl",
+          "p-dr",
+          "p-t1n",
+          "p-t2n",
+          "p-t1p",
+          "p-t2p",
+          "p-nx-nhl",
+          "p-nx-nhr",
+          "p-nx-result-t1",
+          "p-nx-result-t2",
+          "p-nx-t1n",
+          "p-nx-t2n",
+          "p-nx-ndl",
+          "p-nx-ndr"
+        ].forEach((id) => {
+          clampPreviewFont(document.getElementById(id), 14, 8);
+        });
       }
 
       function prom() {
@@ -826,14 +982,26 @@
         if (state.route === "nx") {
           sbPreview.style.display = "none";
           nxPreview.style.display = "block";
+          document.getElementById("p-nx-nhl").innerText = state.nhl;
+          document.getElementById("p-nx-nhr").innerText = state.nhr;
+          document.getElementById("p-nx-result-t1").innerText = state.t1n;
+          document.getElementById("p-nx-result-t1s1").innerText = state.t1s1;
+          document.getElementById("p-nx-result-t1s2").innerText = state.t1s2;
+          document.getElementById("p-nx-result-t1s3").innerText = state.t1s3;
+          document.getElementById("p-nx-result-t2").innerText = state.t2n;
+          document.getElementById("p-nx-result-t2s1").innerText = state.t2s1;
+          document.getElementById("p-nx-result-t2s2").innerText = state.t2s2;
+          document.getElementById("p-nx-result-t2s3").innerText = state.t2s3;
           document.getElementById("p-nx-t1n").innerText = state.nt1n;
-          document.getElementById("p-nx-t1p").innerText = state.nt1p;
           document.getElementById("p-nx-t2n").innerText = state.nt2n;
-          document.getElementById("p-nx-t2p").innerText = state.nt2p;
+          document.getElementById("p-nx-ndl").innerText = state.ndl;
+          document.getElementById("p-nx-ndr").innerText = state.ndr;
         } else {
           sbPreview.style.display = "block";
           nxPreview.style.display = "none";
         }
+
+        fitPreviewText();
 
         // Update preview overlay scorebug data
         document.getElementById("p-hl").innerText = state.hl;
@@ -979,28 +1147,44 @@
 
       // 5. Fire connection events only after DOM is ready and functions are mapped
       document.addEventListener("DOMContentLoaded", function () {
+        const savedState = localStorage.getItem("pelota-scorebug-state");
+        if (savedState) {
+          try {
+            state = JSON.parse(savedState);
+            console.log("Remote loaded saved local state.");
+          } catch (err) {
+            console.warn("Unable to parse saved state:", err);
+          }
+        }
+
+        upd();
+
         ably.connection.on("connected", function () {
           console.log("Remote controller connected to Ably.");
+          document.getElementById("connection-status").innerText =
+            "Ably status: connected";
 
-          // 1. Fetch the last message sent before this refresh
-          chan.history({ limit: 1 }, function (err, page) {
-            if (!err && page.items.length > 0) {
-              console.log("Restoring previous state from history cache...");
-              state = page.items[0].data;
-            } else {
-              console.log("No history found, using default shared state.");
-              state = { ...DEFAULT_STATE };
-            }
-
+          chan.subscribe("u", function (m) {
+            state = m.data;
             upd();
-            psh();
-
-            // 2. Now that history is handled, safely start listening for live changes
-            chan.subscribe("u", function (m) {
-              state = m.data;
-              upd();
-            });
           });
+        });
+
+        ably.connection.on("failed", function (err) {
+          const message =
+            err && err.reason
+              ? err.reason
+              : err && err.message
+              ? err.message
+              : "Unknown Ably error";
+          console.warn("Ably connection failed, local fallback enabled:", message);
+          document.getElementById("connection-status").innerText =
+            "Ably status: failed — " + message;
+        });
+
+        ably.connection.on("disconnected", function () {
+          document.getElementById("connection-status").innerText =
+            "Ably status: disconnected";
         });
       });
     </script>

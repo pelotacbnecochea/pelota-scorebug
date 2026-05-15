@@ -155,24 +155,89 @@
         border-bottom: 1px solid #333;
         padding-bottom: 10px;
       }
-      .next-team-row {
+      .next-meta-row,
+      .dropline-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 16px;
+        font-size: 14px;
+        color: var(--text2);
+        min-height: 1.3em;
+      }
+      .next-meta-row span,
+      .dropline-row span {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .next-meta-row span:last-child,
+      .dropline-row span:last-child {
+        text-align: right;
+      }
+      .resultado-label,
+      .next-section-label {
+        display: block;
+        font-size: 12px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        color: #fff;
+        margin-bottom: 8px;
+      }
+      .result-team-name {
+        font-weight: bold;
+        flex: 1;
+        text-align: left;
+      }
+      .result-scores {
+        display: inline-flex;
+        gap: 8px;
+        justify-content: flex-end;
+        min-width: 130px;
+      }
+      .result-scores span {
+        min-width: 24px;
+        padding: 4px 6px;
+        background: var(--box);
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .next-separator {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
         margin: 20px 0;
       }
-      .next-team-name {
-        font-size: 28px;
+      .next-section-label {
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .next-match-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        font-size: 20px;
         font-weight: bold;
         color: #fff;
+        margin-bottom: 18px;
       }
-      .next-team-players {
-        font-size: 18px;
-        color: var(--text2);
-        margin-top: 4px;
-      }
-      .vs-divider {
-        font-size: 15px;
+      .next-match-vs {
         color: var(--accent);
-        font-weight: bold;
-        margin: 15px 0;
+        font-size: 14px;
+        text-transform: uppercase;
         letter-spacing: 1px;
       }
       .hidden {
@@ -222,15 +287,37 @@
     </div>
 
     <div id="next-box" class="hidden">
-      <div id="next-title">Próximo Partido</div>
-      <div class="next-team-row">
-        <div id="nx-t1n" class="next-team-name">-</div>
-        <div id="nx-t1p" class="next-team-players">-</div>
+      <div class="next-meta-row">
+        <span id="nx-nhl">Header left</span>
+        <span id="nx-nhr">Header right</span>
       </div>
-      <div class="vs-divider">VS</div>
-      <div class="next-team-row">
-        <div id="nx-t2n" class="next-team-name">-</div>
-        <div id="nx-t2p" class="next-team-players">-</div>
+      <div class="resultado-label">Resultado</div>
+      <div class="result-row">
+        <span id="nx-result-t1" class="result-team-name">Team 1</span>
+        <span class="result-scores">
+          <span id="nx-result-t1s1">0</span>
+          <span id="nx-result-t1s2">0</span>
+          <span id="nx-result-t1s3">0</span>
+        </span>
+      </div>
+      <div class="result-row">
+        <span id="nx-result-t2" class="result-team-name">Team 2</span>
+        <span class="result-scores">
+          <span id="nx-result-t2s1">0</span>
+          <span id="nx-result-t2s2">0</span>
+          <span id="nx-result-t2s3">0</span>
+        </span>
+      </div>
+      <div class="next-separator"></div>
+      <div class="next-section-label">Próximo Partido</div>
+      <div class="next-match-row">
+        <span id="nx-t1n">Next Team 1</span>
+        <span class="next-match-vs">vs</span>
+        <span id="nx-t2n">Next Team 2</span>
+      </div>
+      <div class="dropline-row">
+        <span id="nx-ndl">Drop left</span>
+        <span id="nx-ndr">Drop right</span>
       </div>
     </div>
 
@@ -240,9 +327,13 @@
         window.location.href = "index.html";
       }
 
-      const ably = new Ably.Realtime(
-        "0iWGhA.HcMh0A:p5vD047w2LVWlpn6Ur53ylhokarBgo9wOmEq8EiaLrY",
-      );
+      const ABLY_KEY =
+        urlParams.get("ablyKey") ||
+        "0iWGhA.FW3w1g:EMD5WZ2N_sE9rzhKdMJ9im2thlS0IJ5cAcf-WhAlTAw?rewind=1";
+      const ably = new Ably.Realtime({
+        key: ABLY_KEY,
+        clientId: "overlay-" + Math.random().toString(36).slice(2),
+      });
       const chan = ably.channels.get("p-neco");
 
       function updateOverlay(s) {
@@ -294,10 +385,20 @@
             ? "url('" + s.t2l + "')"
             : "none";
         } else if (s.route === "nx") {
+          document.getElementById("nx-nhl").innerText = s.nhl;
+          document.getElementById("nx-nhr").innerText = s.nhr;
+          document.getElementById("nx-result-t1").innerText = s.t1n;
+          document.getElementById("nx-result-t1s1").innerText = s.t1s1;
+          document.getElementById("nx-result-t1s2").innerText = s.t1s2;
+          document.getElementById("nx-result-t1s3").innerText = s.t1s3;
+          document.getElementById("nx-result-t2").innerText = s.t2n;
+          document.getElementById("nx-result-t2s1").innerText = s.t2s1;
+          document.getElementById("nx-result-t2s2").innerText = s.t2s2;
+          document.getElementById("nx-result-t2s3").innerText = s.t2s3;
           document.getElementById("nx-t1n").innerText = s.nt1n;
-          document.getElementById("nx-t1p").innerText = s.nt1p;
           document.getElementById("nx-t2n").innerText = s.nt2n;
-          document.getElementById("nx-t2p").innerText = s.nt2p;
+          document.getElementById("nx-ndl").innerText = s.ndl;
+          document.getElementById("nx-ndr").innerText = s.ndr;
         }
       }
 
@@ -308,9 +409,30 @@
         try {
           updateOverlay(OVERLAY_DEFAULT_STATE);
           console.log("Overlay initialized with default shared state successfully.");
+
+          const savedState = localStorage.getItem("pelota-scorebug-state");
+          if (savedState) {
+            try {
+              updateOverlay(JSON.parse(savedState));
+              console.log("Overlay loaded from localStorage fallback state.");
+            } catch (parseErr) {
+              console.warn("Unable to parse saved overlay state:", parseErr);
+            }
+          }
         } catch (err) {
           console.error("Initialization error (check your HTML IDs):", err);
         }
+
+        window.addEventListener("storage", function (event) {
+          if (event.key === "pelota-scorebug-state" && event.newValue) {
+            try {
+              const fallback = JSON.parse(event.newValue);
+              updateOverlay(fallback);
+            } catch (err) {
+              console.warn("Failed to apply localStorage fallback state:", err);
+            }
+          }
+        });
 
         // 2. Subscribe to Ably ONLY after the page is fully ready
         /*chan.subscribe('u', function(m) {
@@ -326,18 +448,23 @@
         ably.connection.on("connected", function () {
           console.log("Ably connected successfully. Subscribing to channel...");
 
-          chan.history({ limit: 1 }, function (err, page) {
-            if (!err && page.items.length > 0) {
-              console.log("Restoring previous state from history cache...");
-              updateOverlay(page.items[0].data);
-            } else {
-              console.log("No history found, relying on default shared state until live update arrives.");
-            }
-
-            chan.subscribe("u", function (m) {
-              updateOverlay(m.data);
-            });
+          chan.subscribe("u", function (m) {
+            updateOverlay(m.data);
           });
+        });
+
+        ably.connection.on("failed", function (err) {
+          const message =
+            err && err.reason
+              ? err.reason
+              : err && err.message
+              ? err.message
+              : "Unknown Ably error";
+          console.warn("Ably connection failed:", message);
+        });
+
+        ably.connection.on("disconnected", function () {
+          console.warn("Ably connection disconnected");
         });
       });
     </script>
