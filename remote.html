@@ -1,1223 +1,836 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
-    />
-    <title>Remote</title>
-    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
-    <script src="default-state.js?v=20260515"></script>
-    <style>
-      body {
-        font-family: Arial;
-        margin: 0;
-        padding: 6px;
-        background: #1a252f;
-        color: #fff;
-        box-sizing: border-box;
-      }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport"
+             content="width=device-width,initial-scale=1.0,
+                      maximum-scale=1.0,user-scalable=no"/>
+        <title>Control - Tanteador de Pelota</title>
+        <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+        <script src="default-state.js?v=20260515"></script>
+        <style>
+            /* Global box-sizing */
+            *, 
+            *::before, 
+            *::after { 
+                box-sizing: border-box; 
+            }
 
-      .sect {
-        background: #2c3e50;
-        padding: 8px;
-        border-radius: 6px;
-        margin-bottom: 8px;
-      }
+            :root{
+                --bg-page: #1a252f;
+                --sect-bg: #2c3e50;
+                --panel-bg: #111;
+                --panel-bg-2: #222;
+                --accent: #3498db;
+                --accent-2: #d4af37;
+                --muted: #7f8c8d;
+                --text: #ffffff;
+                --text-muted: #aaa;
+                --highlight: #f4d03f;
+                --success: #2ecc71;
+                --danger: #e74c3c;
+                --border: #34495e;
+                --card-radius: 6px;
+                --gap: 4px;
+                --ui-padding: 8px;
+            }
 
-      h2 {
-        margin: 0 0 6px 0;
-        font-size: 13px;
-        color: #3498db;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 2px;
-        text-transform: uppercase;
-      }
+            /* Base */
+            html, body {
+                height: 100%;
+            }
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0;
+                padding: 6px;
+                background-color: var(--bg-page);
+                color: var(--text);
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                -webkit-text-size-adjust: 100%;
+            }
 
-      .f-row {
-        display: flex;
-        gap: 4px;
-        margin-bottom: 5px;
-        flex-wrap: wrap;
-      }
+            /* Sections */
+            .sect {
+                background-color: var(--sect-bg);
+                padding: 8px;
+                border-radius: var(--card-radius);
+                margin-bottom: 8px;
+                position: relative; /* clave para overflow */
+                overflow: hidden;   /* evita que el iframe o elementos se salgan */
+            }
 
-      input[type="text"] {
-        padding: 8px;
-        border-radius: 4px;
-        border: 1px solid #34495e;
-        background: #111;
-        color: #fff;
-        font-size: 13px;
-        flex-grow: 1;
-        min-width: 90px;
-        box-sizing: border-box;
-      }
+            /* Headings */
+            h2 {
+                margin: 0 0 6px 0;
+                font-size: 13px;
+                color: var(--accent);
+                border-bottom: 2px solid var(--accent);
+                padding-bottom: 2px;
+                text-transform: uppercase;
+            }
+            h3 {
+                margin: 12px 0 0 0;
+                font-size: 12px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+            }
 
-      .btn {
-        background: #e74c3c;
-        color: #fff;
-        border: none;
-        padding: 10px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 12px;
-        flex-grow: 1;
-        text-align: center;
-        transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
-      }
+            /* Iframe / preview: responsive using aspect-ratio */
+            #overlayFrame {
+                width: 100%;
+                aspect-ratio: 16 / 9;   /* mantiene proporción 16:9 */
+                height: auto;
+                max-height: 60vh;       /* evita que ocupe más del 60% de la altura de la ventana */
+                border: none;
+                display: block;
+                background-color: transparent;
+            }
 
-      .btn:hover,
-      .g-up:hover,
-      .g-down:hover,
-      .p-btn:hover {
-        filter: brightness(1.05);
-      }
+            /* Layout helpers */
+            .f-row {
+                display: flex;
+                gap: var(--gap);
+                margin-bottom: 5px;
+                flex-wrap: wrap;
+            }
 
-      .btn:active,
-      .g-up:active,
-      .g-down:active,
-      .p-btn:active {
-        transform: translateY(1px);
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
+            /* Inputs */
+            input[type="text"] {
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid var(--border);
+                background-color: var(--panel-bg);
+                color: var(--text);
+                font-size: 13px;
+                flex-grow: 1;
+                min-width: 90px;
+                line-height: 1.2;
+            }
 
-      .btn.active {
-        background: #2ecc71;
-      }
+            /* Buttons */
+            .btn {
+                background-color: var(--danger);
+                color: var(--text);
+                border: none;
+                padding: 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 12px;
+                line-height: 1;
+                flex-grow: 1; /* requiere contenedor display:flex */
+                text-align: center;
+                transition:
+                    transform 0.1s ease,
+                    box-shadow 0.1s ease,
+                    background-color 0.15s ease;
+                will-change: transform;
+            }
 
-      .g-4 {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 4px;
-        margin-top: 4px;
-      }
+            /* Hover / active */
+            .btn:hover,
+            .g-up:hover,
+            .g-down:hover,
+            .p-btn:hover {
+                filter: brightness(1.05);
+            }
+            .btn:active,
+            .g-up:active,
+            .g-down:active,
+            .p-btn:active {
+                transform: translateY(1px);
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            }
 
-      .g-3 {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        margin-top: 4px;
-      }
+            /* Focus (accesibilidad) */
+            .btn:focus,
+            input[type="text"]:focus,
+            .p-btn:focus,
+            .g-up:focus,
+            .g-down:focus {
+                outline: 3px solid rgba(52,152,219,0.18);
+                outline-offset: 2px;
+            }
 
-      .score-cell {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
+            /* Active state */
+            .btn.active {
+                background-color: var(--success);
+            }
 
-      .b-grp {
-        background: #111;
-        padding: 4px;
-        border-radius: 4px;
-        text-align: center;
-        border: 1px solid #34495e;
-        flex: 1;
-      }
+            /* Grid groups */
+            .g-4 {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--gap);
+                margin-top: 4px;
+            }
+            .g-3 {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: var(--gap);
+                margin-top: 4px;
+            }
 
-      .count {
-        min-width: 28px;
-        padding: 6px 8px;
-        border-radius: 4px;
-        background: #222;
-        color: #f4d03f;
-        font-size: 14px;
-        font-weight: bold;
-        text-align: center;
-      }
+            /* Score / groups */
+            .score-cell {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .b-grp {
+                background-color: var(--panel-bg);
+                padding: 4px;
+                border-radius: 4px;
+                text-align: center;
+                border: 1px solid var(--border);
+                flex: 1;
+            }
+            .count {
+                min-width: 28px;
+                padding: 6px 8px;
+                border-radius: 4px;
+                background-color: var(--panel-bg-2);
+                color: var(--highlight);
+                font-size: 14px;
+                font-weight: bold;
+                text-align: center;
+            }
+            .b-grp label {
+                display: block;
+                font-size: 9px;
+                color: #bdc3c7;
+                margin-bottom: 2px;
+                font-weight: bold;
+            }
 
-      .b-grp label {
-        display: block;
-        font-size: 9px;
-        color: #bdc3c7;
-        margin-bottom: 2px;
-        font-weight: bold;
-      }
+            /* G buttons */
+            .g-up {
+                width: 70%;
+                height: 40px;
+                font-size: 20px;
+                font-weight: bold;
+                background-color: var(--success);
+                color: var(--text);
+                border: none;
+                border-radius: 4px;
+            }
+            .g-down {
+                width: 70%;
+                height: 40px;
+                font-size: 20px;
+                background-color: var(--muted);
+                color: var(--text);
+                border: none;
+                border-radius: 4px;
+                margin-top: 3px;
+            }
 
-      .g-up {
-        width: 100%;
-        height: 45px;
-        font-size: 20px;
-        font-weight: bold;
-        background: #2ecc71;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-      }
+            /* Primary action */
+            .p-btn {
+                background-color: #e67e22;
+                color: var(--text);
+                width: 100%;
+                padding: 10px;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 4px;
+                text-transform: uppercase;
+            }
 
-      .g-down {
-        width: 100%;
-        height: 26px;
-        font-size: 11px;
-        background: #7f8c8d;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        margin-top: 3px;
-      }
+            /* Small utilities */
+            .hidden { 
+                display: none !important; 
+            }
+            .center { 
+                text-align: center; 
+            }
+            .small { 
+                font-size: 11px; 
+                color: var(--text-muted); 
+            }
+            /* Performance note: avoid will-change en muchos elementos simultáneamente */
+        </style>
+    </head>
 
-      .p-btn {
-        background: #d35400;
-        color: #fff;
-        width: 100%;
-        padding: 10px;
-        font-size: 12px;
-        font-weight: bold;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 4px;
-        text-transform: uppercase;
-      }
+    <body>
+        <div id="connection-status" role="status" aria-live="polite"
+             style="margin-bottom:8px;padding:8px;border-radius:6px;
+                    background:#333;color:#fff;font-size:12px;">
+            Ably status: conectando...
+        </div>
 
-      #pview {
-        background: #111;
-        padding: 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        border-left: 3px solid #d4af37;
-        overflow: hidden;
-        transform-origin: top left;
-        display: inline-block;
-        max-width: 580px;
-        width: 100%;
-      }
+        <div class="sect">
+            <h2>TRANSMISIÓN</h2>
+            <div class="f-row">
+                <button type="button" class="btn" id="btn-send-live" onclick="pshL()" style="background:#e67e22;">
+                    Mostrar en VIVO
+                </button>
+            </div>
+            <div class="f-row">
+                <button type="button" class="btn" id="r-sb" onclick="setR('sb')">Tanteador</button>
+                <button type="button" class="btn" id="r-nx" onclick="setR('nx')">Intervalo</button>
+                <button type="button" class="btn" id="r-hd" onclick="setR('hd')">Ocultar Todo</button>
+            </div>
+            <div class="f-row">
+                <button type="button" class="p-btn" onclick="prom()" 
+                        style="background:#3498db;">
+                    Comenzar Próximo Partido
+                </button>
+            </div>
+        </div>
 
-      :root {
-        --bg1: #111;
-        --bg2: #1a1a1a;
-        --text1: #fff;
-        --text2: #aaa;
-        --accent: #d4af37;
-        --box: #222;
-      }
+        <div class="sect" style="background:#111;border:1px solid #d4af37;">
+            <h2>PANEL DE VISTA PREVIA</h2>
+            <!-- Accessibility: add title. Security: avoid tokens in URL; use server-side auth if possible -->
+            <iframe id="overlayFrame"
+                    title="Vista previa del overlay"
+                    src="overlay.html?preview=1&auth=7630"
+                    aria-hidden="false"></iframe>
+        </div>
 
-      .preview-overlay {
-        position: relative;
-        width: fit-content;
-        background: transparent;
-        margin: 0;
-        padding: 0;
-        display: inline-flex;
-        flex-direction: column;
-        font-weight: bold;
-      }
-
-      .p-row {
-        display: flex;
-        align-items: stretch;
-        background: var(--bg1);
-        color: var(--text1);
-        overflow: hidden;
-      }
-
-      .p-h-row {
-        background: var(--bg2);
-        color: var(--text2);
-        font-size: 9px;
-        text-transform: uppercase;
-        padding: 4px 8px;
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .p-t-logo {  
-        height: 100%;         /* Takes full height of the parent */
-        width: 64px;          /* Automatically calculates dynamic width based on the image's shape */
-        min-width: 60px;      /* Ensures it never gets smaller than 60px */
-        flex: none;           /* Prevents flexbox from squeezing the image */
-        align-self: stretch;  /* Stretches to match parent container height */
-        
-        object-fit: contain;  /* Scale image smoothly without cropping or distorting */
-        background: var(--bg2);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .p-t-container {
-        flex-grow: 0;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .p-t-wrap {
-        display: flex;
-        align-items: center;
-        padding: 3px 8px;
-        height: 25px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        font-size: 11px;
-      }
-
-      .p-score-panel {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        margin-left: 8px;
-        flex: 0;
-      }
-
-      .p-t-img {
-        width: 20px;
-        height: 20px;
-        margin-right: 6px;
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-      }
-
-      .p-t-txt {
-        display: flex;
-        flex-direction: column;
-        flex: 0;
-      }
-
-      .p-t-name {
-        font-size: 12px;
-      }
-
-      .p-t-play {
-        font-size: 8px;
-        color: var(--text2);
-        font-weight: normal;
-        margin-top: 0px;
-      }
-
-      .p-s-boxes {
-        display: flex;
-      }
-
-      .p-s-box {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        background: var(--box);
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-        font-weight: bold;
-      }
-
-      .p-m-box {
-        background: var(--bg2);
-        color: var(--text2);
-        border-right: 2px solid var(--text2);
-      }
-
-      .p-d-row {
-        background: var(--bg2);
-        font-size: 8px;
-        padding: 3px 8px;
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-        color: var(--text2);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .p-hidden {
-        display: none !important;
-      }
-
-      .count {
-        display: inline-block;
-        margin-left: 4px;
-        font-size: 10px;
-        color: #f4d03f;
-        font-weight: normal;
-      }
-
-      .preview-next-box {
-        position: relative;
-        width: 90%;
-        max-width: 580px;
-        background: rgba(17, 17, 17, 0.98);
-        border: 2px solid var(--text2);
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
-        box-sizing: border-box;
-        display: none;
-        margin: 0 auto;
-      }
-
-      .p-next-title {
-        font-size: 14px;
-        color: var(--text2);
-        text-transform: uppercase;
-        margin-bottom: 12px;
-        letter-spacing: 1px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 8px;
-      }
-
-      .p-next-meta-row {
-        display: flex;
-        justify-content: flex-start;
-        gap: 4px;
-        align-items: center;
-        margin-bottom: 0px;
-        font-size: 12px;
-        color: var(--text2);
-        min-height: 1.2em;
-      }
-      .p-dropline-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 4px;
-        align-items: center;
-        margin-bottom: 0px;
-        font-size: 12px;
-        color: var(--text2);
-        min-height: 1.2em;
-      }
-      .p-next-meta-row span,
-      .p-dropline-row span {
-        flex: none;
-        min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-      }
-      .p-next-meta-row span:last-child {
-        text-align: left;
-      }
-      .p-dropline-row span:last-child {
-        text-align: right;
-      }
-      .p-resultado-label,
-      .p-next-section-label {
-        display: block;
-        font-size: 10px;
-        color: var(--text2);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-      }
-      .p-result-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        color: #fff;
-        font-size: 12px;
-        margin-bottom: 6px;
-      }
-      .p-result-team-name {
-        font-weight: bold;
-        flex: none;
-        min-width: 0;
-        text-align: center;
-      }
-      .p-result-scores {
-        display: inline-flex;
-        gap: 6px;
-        justify-content: flex-end;
-        min-width: 100px;
-      }
-      .p-result-scores span {
-        min-width: 22px;
-        padding: 3px 5px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 3px;
-        font-weight: bold;
-      }
-      .p-next-separator {
-        height: 1px;
-        background: rgba(255,255,255,0.12);
-        margin: 14px 0;
-      }
-      .p-next-section-label {
-        font-size: 10px;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-      }
-      .p-next-match-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        color: #fff;
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 12px;
-      }
-      .p-next-match-vs {
-        color: var(--text2);
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 1px;
-      }
-      .p-next-team-row {
-        margin: 0;
-      }
-
-      .p-next-team-name {
-        font-size: 18px;
-        font-weight: bold;
-        color: #fff;
-      }
-
-      .p-next-team-players {
-        font-size: 12px;
-        color: var(--text2);
-        margin-top: 2px;
-      }
-
-      .p-vs-divider {
-        font-size: 10px;
-        color: var(--text2);
-        font-weight: bold;
-        margin: 8px 0;
-        letter-spacing: 1px;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div id="connection-status" style="margin-bottom: 8px; padding: 8px; border-radius: 6px; background: #333; color: #fff; font-size: 12px;">
-      Ably status: connecting...
-    </div>
-    <div class="sect" style="background: #111; border: 1px solid #d4af37">
-      <h2>👁️ Live Stream Preview Box</h2>
-      <div
-        id="pview"
-        style="
-          overflow-x: auto;
-          background: #000;
-          padding: 4px;
-          border-radius: 4px;
-        "
-      >
-        <div id="preview-scorebug" class="preview-overlay">
-          <div class="p-h-row p-row">
-            <span id="p-hl">Encabezado 1</span>
-            <span id="p-hr">Encabezado 2</span>
-          </div>
-          <div class="p-row" style="flex: 1">
-            <img id="p-t-logo" alt="logo" class="p-t-logo p-hidden"></img>
-            <div class="p-t-container">
-              <div class="p-t-wrap">
-                <div id="p-t1l" class="p-t-img p-hidden"></div>
-                <div class="p-t-txt">
-                  <span id="p-t1n" class="p-t-name">Equipo 1</span
-                  ><span id="p-t1p" class="p-t-play">Jugadores 1</span>
+        <div class="sect">
+            <h2>PARTIDO</h2>
+            <div style="background:#333;padding:8px;border-radius:4px;margin:8px 0px;">
+                <h3 style="margin:0 0 8px 0;font-size:12px;color:#aaa;">
+                    Control del Resultado
+                </h3>
+                <div class="f-row">
+                    <button type="button" class="btn" id="cb-s1" onclick="togB('s1')">
+                        Mostrar Set 1
+                    </button>
+                    <button type="button" class="btn" id="cb-s2" onclick="togB('s2')">
+                        Mostrar Set 2
+                    </button>
+                    <button type="button" class="btn" id="cb-s3" onclick="togB('s3')">
+                        Mostrar Set 3
+                    </button>
                 </div>
-              </div>
-              <div class="p-t-wrap">
-                <div id="p-t2l" class="p-t-img p-hidden"></div>
-                <div class="p-t-txt">
-                  <span id="p-t2n" class="p-t-name">Equipo 2</span
-                  ><span id="p-t2p" class="p-t-play">Jugadores 2</span>
+                <div class="g-3" style="margin-top:8px;">
+                    <div class="score-cell">
+                        <div class="b-grp">
+                            <label for="count-t1s1">
+                                Equipo 1 - Set 1
+                            </label>
+                            <div>
+                                <button type="button" class="g-up" onclick="pPt('t1s1', 1)">
+                                    +
+                                </button>
+                                <button type="button" class="g-down" onclick="pPt('t1s1', -1)">
+                                    -
+                                </button>
+                            </div>
+                        </div>
+                        <div id="count-t1s1" class="count" aria-live="polite">
+                            0
+                        </div>
+                    </div>
+                    <div class="score-cell">
+                        <div class="b-grp">
+                            <label for="count-t1s2">
+                                Equipo 1 -Set 2
+                            </label>
+                            <div>
+                                <button type="button" class="g-up" onclick="pPt('t1s2', 1)">
+                                    +
+                                </button>
+                                <button type="button" class="g-down" onclick="pPt('t1s2', -1)">
+                                    -
+                                </button>
+                            </div>
+                        </div>
+                        <div id="count-t1s2" class="count" aria-live="polite">
+                            0
+                        </div>
+                    </div>
+                    <div class="score-cell">
+                        <div class="b-grp">
+                            <label for="count-t1s3">
+                                Equipo 1 - Set 3
+                            </label>
+                            <div>
+                                <button type="button" class="g-up" onclick="pPt('t1s3', 1)">
+                                    +
+                                </button>
+                                <button type="button" class="g-down" onclick="pPt('t1s3', -1)">
+                                    -
+                                </button>
+                            </div>
+                        </div>
+                        <div id="count-t1s3" class="count" aria-live="polite">
+                            0
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                <div class="g-3" style="margin-top:8px;">
+                    <div class="score-cell">
+                        <div class="b-grp">
+                            <label for="count-t2s1">
+                                Equipo 2 - Set 1
+                            </label>
+                            <div>
+                                <button type="button" class="g-up" onclick="pPt('t2s1', 1)">
+                                    +
+                                </button>
+                                <button type="button" class="g-down" onclick="pPt('t2s1', -1)">
+                                    -
+                                </button>
+                            </div>
+                        </div>
+                        <div id="count-t2s1" class="count" aria-live="polite">
+                            0
+                        </div>
+                    </div>
+
+                    <div class="score-cell">
+                        <div class="b-grp">
+                            <label for="count-t2s2">
+                                Equipo 2 - Set 2
+                            </label>
+                            <div>
+                                <button type="button" class="g-up" onclick="pPt('t2s2', 1)">
+                                    +
+                                </button>
+                                <button type="button" class="g-down" onclick="pPt('t2s2', -1)">
+                                    -
+                                </button>
+                            </div>
+                        </div>
+                        <div id="count-t2s2" class="count" aria-live="polite">
+                            0
+                        </div>
+                    </div>
+
+                    <div class="score-cell">
+                        <div class="b-grp">
+                            <label for="count-t2s3">
+                                Equipo 2 - Set 3
+                            </label>
+                            <div>
+                                <button type="button" class="g-up" onclick="pPt('t2s3', 1)">
+                                    +
+                                </button>
+                                <button type="button" class="g-down" onclick="pPt('t2s3', -1)">
+                                    -
+                                </button>
+                            </div>
+                        </div>
+                        <div id="count-t2s3" class="count" aria-live="polite">
+                            0
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="p-score-panel">
-              <div class="p-s-boxes">
-                <div id="p-t1s1" class="p-s-box">0</div>
-                <div id="p-t1s2" class="p-s-box">0</div>
-                <div id="p-t1s3" class="p-s-box">0</div>
-              </div>
-              <div class="p-s-boxes">
-                <div id="p-t2s1" class="p-s-box">0</div>
-                <div id="p-t2s2" class="p-s-box">0</div>
-                <div id="p-t2s3" class="p-s-box">0</div>
-              </div>
+            <div style="background:#333;padding:15px;border-radius:4px;margin:8px 0 0 0;">
+                <div class="f-row">
+                    <button type="button" class="btn" id="cb-h" onclick="togV('vh')">
+                        ENCABEZADO
+                    </button>
+                    <button type="button" class="btn" id="cb-tl" onclick="togV('vt')">
+                        LOGO
+                    </button>
+                    <button type="button" class="btn" id="cb-d" onclick="togV('vd')">
+                        PIE
+                    </button>
+                </div>
+                <div class="f-row" style="display: flex; align-items: center; width: 100%;">
+                    <div class="control-group" style="width:100%;">
+                        <label for="i-scale" style="flex: 0 0 180px; font-size: 12px; color: var(--text-muted);">
+                            Tamaño del Tanteador:
+                        </label>
+                        <select id="i-scale" onchange="changeScale(this.value)" class="btn" 
+                                style="flex: 1 1 auto; min-width: 120px; padding: 8px; margin: 8px 0 0 0; 
+                                        border-radius: 4px; border: 1px solid var(--border); 
+                                        background-color: var(--muted); color: var(--text); text-align: center;">
+                            <option value="0.5">50%</option>
+                            <option value="0.75">75%</option>
+                            <option value="0.85">85%</option>
+                            <option value="1.0">100% (Normal)</option>
+                            <option value="1.25">125%</option>
+                            <option value="1.5">150%</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="p-d-row p-row">
-            <span id="p-dl">Pie de línea 1</span>
-            <span id="p-dr">Pie de línea 2</span>
-          </div>
         </div>
-        <div id="preview-nextbox" class="preview-next-box">
-          <div class="p-next-meta-row">
-            <span id="p-nx-nhl">Encabezado 1</span>
-          </div>
-          <div id="p-nx-resultado-label" class="p-resultado-label">Resultado</div>
-          <div class="p-result-row">
-            <span id="p-nx-result-t1" class="p-result-team-name">Equipo 1</span>
-            <span class="p-result-scores">
-              <span id="p-nx-result-t1s1">0</span>
-              <span id="p-nx-result-t1s2">0</span>
-              <span id="p-nx-result-t1s3">0</span>
-            </span>
-          </div>
-          <div class="p-result-row">
-            <span id="p-nx-result-t2" class="p-result-team-name">Equipo 2</span>
-            <span class="p-result-scores">
-              <span id="p-nx-result-t2s1">0</span>
-              <span id="p-nx-result-t2s2">0</span>
-              <span id="p-nx-result-t2s3">0</span>
-            </span>
-          </div>
-          <div class="p-next-separator"></div>
-          <div id="p-nx-next-section-label" class="p-next-section-label">Próximo Partido</div>
-          <div class="p-next-match-row">
-            <span id="p-nx-t1n">-</span>
-            <span class="p-next-match-vs">vs</span>
-            <span id="p-nx-t2n">-</span>
-          </div>
-          <div class="p-dropline-row">
-            <span id="p-nx-ndl">Pie de línea 1</span>
-            <span id="p-nx-ndr">Pie de línea 2</span>
-          </div>
+
+        <div class="sect">
+            <h2>DETALLES DEL PARTIDO</h2>
+            <div class="f-row">
+                <label for="i-hl" class="small" style="display:none;">
+                    Evento
+                </label>
+                <input type="text" id="i-hl" placeholder="Evento" aria-label="Evento" />
+                <input type="text" id="i-hr" placeholder="Instancia" aria-label="Instancia" />
+            </div>
+            <div class="f-row">
+                <input type="text" id="i-tu" placeholder="URL Logo del Evento" style="width:100%" aria-label="URL Logo del Evento" />
+            </div>
+            <div class="f-row">
+                <input type="text" id="i-dl" placeholder="Lugar" aria-label="Lugar" />
+                <input type="text" id="i-dr" placeholder="Fecha" aria-label="Fecha" />
+            </div>
+            <div class="sect" style="border-left:4px solid #2ecc71;">
+                <h2>🟢 Equipo 1</h2>
+                <div class="f-row">
+                    <input type="text" id="i-t1n" placeholder="Equipo 1" aria-label="Equipo 1" />
+                    <input type="text" id="i-t1p" placeholder="Jugadores Equipo 1" aria-label="Jugadores Equipo 1" />
+                </div>
+                <div class="f-row">
+                    <input type="text" id="i-t1l" placeholder="URL Escudo Equipo 1" style="width:70%" aria-label="URL Escudo Equipo 1" />
+                    <button type="button" class="btn" id="cb-t1l" onclick="togV('v1')">
+                        Escudo Equipo 1
+                    </button>
+                </div>
+            </div>
+            <div class="sect" style="border-left:4px solid #e74c3c;">
+                <h2>🔴 Equipo 2</h2>
+                <div class="f-row">
+                    <input type="text" id="i-t2n" placeholder="Equipo 2" aria-label="Equipo 2" />
+                    <input type="text" id="i-t2p" placeholder="Jugadores Equipo 2" aria-label="Jugadores Equipo 2" />
+                </div>
+                <div class="f-row">
+                    <input type="text" id="i-t2l" placeholder="URL Escudo Equipo 2" style="width:70%" aria-label="URL Escudo Equipo 2" />
+                    <button type="button" class="btn" id="cb-t2l" onclick="togV('v2')">
+                        Escudo Equipo 2
+                    </button>
+                </div>
+            </div>
+            <div style="padding:0 8px;">
+                <button type="button" class="p-btn" onclick="applyMatchText()">
+                    Aplicar Cambios al Partido
+                </button>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div class="sect" style="background: #27ae60">
-      <h2>🎛️ Router</h2>
-      <div class="f-row">
-        <button class="btn" id="r-sb" onclick="setR('sb')">Scorebug</button>
-        <button class="btn" id="r-nx" onclick="setR('nx')">Next Box</button>
-        <button class="btn" id="r-hd" onclick="setR('hd')">Hide All</button>
-      </div>
-      <button class="p-btn" onclick="prom()">
-        💥 Comenzar próximo partido (Devuelve 0-0)
-      </button>
-    </div>
-
-    <div class="sect">
-      <h2>⚙️ Config</h2>
-      <div class="f-row">
-        <button class="btn" id="cb-h" onclick="togV('vh')">Header</button>
-        <button class="btn" id="cb-tl" onclick="togV('vt')">T-Logo</button>
-        <button class="btn" id="cb-d" onclick="togV('vd')">Dropline</button>
-      </div>
-      <div class="f-row">
-        <button class="btn" id="cb-s1" onclick="togB('s1')">S1</button>
-        <button class="btn" id="cb-s2" onclick="togB('s2')">S2</button>
-        <button class="btn" id="cb-s3" onclick="togB('s3')">S3</button>
-      </div>
-      <div
-        style="
-          background: #333;
-          padding: 8px;
-          border-radius: 4px;
-          margin: 8px 0;
-        "
-      >
-        <h3 style="margin: 0 0 8px 0; font-size: 12px; color: #aaa">
-          Score Management
-        </h3>
-        <div class="g-3">
-          <div class="score-cell">
-            <div class="b-grp">
-              <label>T1 SET 1</label>
-              <button class="g-up" onclick="pPt('t1s1', 1)">+</button>
-              <button class="g-down" onclick="pPt('t1s1', -1)">-</button>
+        <div class="sect" style="border-left:4px solid #e67e22;">
+            <h2>🟠 PREPARAR PROXIMO PARTIDO</h2>
+            <div class="f-row">
+                <input type="text" id="n-hl" placeholder="Próximo Evento" aria-label="Próximo Evento" />
+                <input type="text" id="n-hr" placeholder="Próxima Instancia" aria-label="Próxima Instancia" />
             </div>
-            <div id="count-t1s1" class="count">0</div>
-          </div>
-          <div class="score-cell">
-            <div class="b-grp">
-              <label>T1 SET 2</label>
-              <button class="g-up" onclick="pPt('t1s2', 1)">+</button>
-              <button class="g-down" onclick="pPt('t1s2', -1)">-</button>
+            <div class="f-row">
+                <input type="text" id="n-dl" placeholder="Próximo Lugar" aria-label="Próximo Lugar" />
+                <input type="text" id="n-dr" placeholder="Próxima Fecha" aria-label="Próxima Fecha" />
             </div>
-            <div id="count-t1s2" class="count">0</div>
-          </div>
-          <div class="score-cell">
-            <div class="b-grp">
-              <label>T1 SET 3</label>
-              <button class="g-up" onclick="pPt('t1s3', 1)">+</button>
-              <button class="g-down" onclick="pPt('t1s3', -1)">-</button>
+            <div class="f-row">
+                <input type="text" id="n-t1n" placeholder="Próximo Equipo 1" aria-label="Próximo Equipo 1" />
+                <input type="text" id="n-t1p" placeholder="Próximos Jugadores Equipo 1" aria-label="Próximos Jugadores Equipo 1" />
             </div>
-            <div id="count-t1s3" class="count">0</div>
-          </div>
+            <div class="f-row">
+                <input type="text" id="n-t2n" placeholder="Próximo Equipo 2" aria-label="Próximo Equipo 2" />
+                <input type="text" id="n-t2p" placeholder="Próximos Jugadores Equipo 2" aria-label="Próximos Jugadores Equipo 2" />
+            </div>
+            <div style="padding:0 8px;">
+                <button type="button" class="p-btn" onclick="applyNextPrepText()">
+                    Aplicar Cambios al Próximo Partido
+                </button>
+            </div>
         </div>
-        <div class="g-3" style="margin-top: 8px">
-          <div class="score-cell">
-            <div class="b-grp">
-              <label>T2 SET 1</label>
-              <button class="g-up" onclick="pPt('t2s1', 1)">+</button>
-              <button class="g-down" onclick="pPt('t2s1', -1)">-</button>
-            </div>
-            <div id="count-t2s1" class="count">0</div>
-          </div>
-          <div class="score-cell">
-            <div class="b-grp">
-              <label>T2 SET 2</label>
-              <button class="g-up" onclick="pPt('t2s2', 1)">+</button>
-              <button class="g-down" onclick="pPt('t2s2', -1)">-</button>
-            </div>
-            <div id="count-t2s2" class="count">0</div>
-          </div>
-          <div class="score-cell">
-            <div class="b-grp">
-              <label>T2 SET 3</label>
-              <button class="g-up" onclick="pPt('t2s3', 1)">+</button>
-              <button class="g-down" onclick="pPt('t2s3', -1)">-</button>
-            </div>
-            <div id="count-t2s3" class="count">0</div>
-          </div>
-        </div>
-      </div>
-      <div class="f-row">
-        <!--input type="text" id="scale" placeholder="Scale (e.g. 1.0)" oninput="pSc(this.value)"-->
-      </div>
-      <div class="control-group">
-        <label>Tamaño del Overlay:</label>
-        <select id="i-scale" onchange="changeScale(this.value)" class="btn">
-          <option value="0.5">50%</option>
-          <option value="0.75">75%</option>
-          <option value="0.85">85%</option>
-          <option value="1.0">100% (Normal)</option>
-          <option value="1.25">125%</option>
-        </select>
-      </div>
 
-      <h3
-        style="
-          margin: 12px 0 6px 0;
-          font-size: 11px;
-          color: #aaa;
-          text-transform: uppercase;
-        "
-      >
-        Header & Dropline
-      </h3>
-      <div class="f-row">
-        <input type="text" id="i-hl" placeholder="Head L" />
-        <input type="text" id="i-hr" placeholder="Head R" />
-      </div>
-      <div class="f-row">
-        <input type="text" id="i-dl" placeholder="Drop L" />
-        <input type="text" id="i-dl-val" placeholder="Drop R" />
-      </div>
-      <button
-        class="p-btn"
-        style="background: #3498db"
-        onclick="applyConfigText()"
-      >
-        ✓ Apply Header & Dropline Changes
-      </button>
-      <h3
-        style="
-          margin: 12px 0 6px 0;
-          font-size: 11px;
-          color: #aaa;
-          text-transform: uppercase;
-        "
-      >
-        Tournament Logo
-      </h3>
-      <div class="f-row">
-        <input
-          type="text"
-          id="i-tu"
-          placeholder="Tourn Logo URL"
-          style="width: 100%"
-        />
-      </div>
-      <button
-        class="p-btn"
-        style="background: #9b59b6"
-        onclick="applyTournLogo()"
-      >
-        ✓ Apply Logo URL
-      </button>
-    </div>
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("auth") !== "7630") {
+                document.body.innerHTML = "<h1>Denied</h1>";
+                window.location.href = "index.html";
+            }
 
-    <div class="sect" style="border-left: 4px solid #2ecc71">
-      <h2>🟢 Team 1 (Live)</h2>
-      <div class="f-row">
-        <input type="text" id="i-t1n" placeholder="T1 Name" /><input
-          type="text"
-          id="i-t1p"
-          placeholder="Players"
-        /><button class="btn" id="cb-t1l" onclick="togV('v1')">Logo</button>
-      </div>
-      <div class="f-row">
-        <input
-          type="text"
-          id="i-t1l"
-          placeholder="Logo URL"
-          style="width: 100%"
-        />
-      </div>
-    </div>
+            const ABLY_KEY =
+                urlParams.get("ablyKey") ||
+                "0iWGhA.FW3w1g:EMD5WZ2N_sE9rzhKdMJ9im2thlS0IJ5cAcf-WhAlTAw";
+            const ably = new Ably.Realtime({
+                key: ABLY_KEY,
+                clientId: "remote-" + Math.random().toString(36).slice(2),
+            });
+            const chan = ably.channels.get("p-neco", {
+                params: { rewind: "1" }
+            });
+            let state = { ...DEFAULT_STATE };
 
-    <div class="sect" style="border-left: 4px solid #e74c3c">
-      <h2>🔴 Team 2 (Live)</h2>
-      <div class="f-row">
-        <input type="text" id="i-t2n" placeholder="T2 Name" /><input
-          type="text"
-          id="i-t2p"
-          placeholder="Players"
-        /><button class="btn" id="cb-t2l" onclick="togV('v2')">Logo</button>
-      </div>
-      <div class="f-row">
-        <input
-          type="text"
-          id="i-t2l"
-          placeholder="Logo URL"
-          style="width: 100%"
-        />
-      </div>
-    </div>
+            // Publish to ably
+            function psh() {
+                // preview-only: guarda en localStorage y actualiza UI (no publica)
+                //chan.publish("u", state);
+                try {
+                    localStorage.setItem('pelota-scorebug-state', JSON.stringify(state));
+                } catch (e) {
+                    console.warn('Unable to save preview state:', e);
+                }
+                // notificar iframe de preview sin cambiar su src
+                const iframe = document.getElementById('overlayFrame');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ type: 'preview', state }, '*');
+                }
+                upd(); // actualiza UI del control
+            }
 
-    <div style="padding: 0 8px">
-      <button
-        class="p-btn"
-        style="background: #16a085"
-        onclick="applyTeamsText()"
-      >
-        ✓ Apply All Teams Changes
-      </button>
-    </div>
+            // publicar en vivo: añade live:true y publica por Ably
+            function pshL() {
+                const payload = Object.assign({}, state, { live: true });
+                chan.publish("u", payload, function(err) {
+                    if (err) {
+                        console.error("Publish failed:", err);
+                        return;
+                    }
+                    console.log("Published LIVE payload:", payload);
+                    // opcional: feedback visual
+                    document.getElementById("connection-status").innerText = "Ably status: published live";
+                });
+            }
 
-    <div class="sect" style="border-left: 4px solid #e67e22">
-      <h2>🟠 Next Match Prep Box</h2>
-      <div class="f-row">
-        <input type="text" id="n-hl" placeholder="Next Head L" /><input
-          type="text"
-          id="n-hr"
-          placeholder="Next Head R"
-        />
-      </div>
-      <div class="f-row">
-        <input type="text" id="n-dl" placeholder="Next Drop L" /><input
-          type="text"
-          id="n-dr"
-          placeholder="Next Drop R"
-        />
-      </div>
-      <div class="f-row">
-        <input type="text" id="n-t1n" placeholder="Next T1 Name" /><input
-          type="text"
-          id="n-t1p"
-          placeholder="Next T1 Players"
-        />
-      </div>
-      <div class="f-row">
-        <input type="text" id="n-t2n" placeholder="Next T2 Name" /><input
-          type="text"
-          id="n-t2p"
-          placeholder="Next T2 Players"
-        />
-      </div>
-      <button
-        class="p-btn"
-        style="background: #e67e22"
-        onclick="applyNextPrepText()"
-      >
-        ✓ Apply Next Match Prep Changes
-      </button>
-    </div>
+            // Mostrar tanteador o intervalo o esconder todo
+            function setR(r) {
+                // Si ya es la misma ruta, no hacemos nada (evita que la preview desaparezca)
+                if (state.route === r) {
+                    // ya estás viendo esa ruta en preview: no reescribimos ni reenviamos
+                    // opcional: forzar re-render local sin tocar storage si necesitás refrescar UI
+                    upd();
+                    return;
+                }
 
-    <script>
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("auth") !== "7630") {
-        document.body.innerHTML = "<h1>Denied</h1>";
-        window.location.href = "index.html";
-      }
+                state.route = r;
+                psh();
+            }
+            // Actualizar puntos, asegurando que no bajen de 0 (en vivo)
+            function pPt(f, a) {
+                state[f] = Math.max(0, state[f] + a);
+                psh();
+                pshL();
+            }
+            // Alternar visibilidad de sets (en vivo)
+            function togB(b) {
+                state["b" + b] = !state["b" + b];
+                psh();
+                pshL();
+            }
+            // Alternar visibilidad de elementos (encabezado, logos, pie)
+            function togV(f) {
+                state[f] = !state[f];
+                psh();
+                pshL();
+            }
+            // Actualizar altura del iframe Vista Previa de forma instantánea (sin animación)
+            function applyIframeHeightInstant(iframe, heightPx) {
+                // desactivar transiciones temporariamente
+                const prevTransition = iframe.style.transition;
+                iframe.style.transition = "none";
 
-      const ABLY_KEY =
-        urlParams.get("ablyKey") ||
-        "0iWGhA.FW3w1g:EMD5WZ2N_sE9rzhKdMJ9im2thlS0IJ5cAcf-WhAlTAw";
-      const ably = new Ably.Realtime({
-        key: ABLY_KEY,
-        clientId: "remote-" + Math.random().toString(36).slice(2),
-      });
-      const chan = ably.channels.get("p-neco", {
-        params: { rewind: "1" }
-      });
-      let state = { ...DEFAULT_STATE };
+                // aplicar altura de golpe
+                iframe.style.height = heightPx + "px";
 
-      function psh() {
-        chan.publish("u", state);
-        try {
-          localStorage.setItem("pelota-scorebug-state", JSON.stringify(state));
-        } catch (e) {
-          console.warn("Unable to save state to localStorage:", e);
-        }
-        upd();
-      }
+                // forzar reflow para asegurar que el cambio se aplique inmediatamente
+                // eslint-disable-next-line no-unused-expressions
+                iframe.offsetHeight;
 
-      function setR(r) {
-        state.route = r;
-        sPr();
-        psh();
-      }
-      function pTx(f, v) {
-        state[f] = v;
-        psh();
-      }
-      function pIm(f, v) {
-        state[f] = v;
-        state["v" + (f === "tu" ? "t" : f === "t1l" ? "1" : "2")] = true;
-        psh();
-      }
-      function pPt(f, a) {
-        state[f] = Math.max(0, state[f] + a);
-        psh();
-      }
-      function pSc(v) {
-        state.scale = v || "1.0";
-        psh();
-      }
-      function togV(f) {
-        state[f] = !state[f];
-        psh();
-      }
-      function togB(b) {
-        state["b" + b] = !state["b" + b];
-        psh();
-      }
-      function sPr() {
-        state.nhl = document.getElementById("n-hl").value;
-        state.nhr = document.getElementById("n-hr").value;
-        state.ndl = document.getElementById("n-dl").value;
-        state.ndr = document.getElementById("n-dr").value;
-        state.nt1n = document.getElementById("n-t1n").value;
-        state.nt1p = document.getElementById("n-t1p").value;
-        state.nt2n = document.getElementById("n-t2n").value;
-        state.nt2p = document.getElementById("n-t2p").value;
-      }
+                // restaurar transición original (si querés animación futura)
+                // lo dejamos restaurado sin animación; si querés animar en otros casos, seteá prevTransition
+                iframe.style.transition = prevTransition || "";
+            }
 
-      function clampPreviewFont(el, maxSize, minSize) {
-        if (!el) return;
-        el.style.whiteSpace = "nowrap";
-        let size = maxSize;
-        el.style.fontSize = size + "px";
-        while (size > minSize && el.scrollWidth > el.clientWidth) {
-          size -= 1;
-          el.style.fontSize = size + "px";
-        }
-      }
+            window.addEventListener("message", (event) => {
+                const data = event.data || {};
+                if (data && data.overlayHeight && data.source === "overlay") {
+                    const iframe = document.getElementById("overlayFrame");
+                    if (!iframe) return;
+                    applyIframeHeightInstant(iframe, Number(data.overlayHeight));
+                }
+            });
 
-      function fitPreviewText() {
-        [
-          "p-hl",
-          "p-hr",
-          "p-dl",
-          "p-dr",
-          "p-t1n",
-          "p-t2n",
-          "p-t1p",
-          "p-t2p",
-          "p-nx-nhl",
-          "p-nx-result-t1",
-          "p-nx-result-t2",
-          "p-nx-t1n",
-          "p-nx-t2n",
-          "p-nx-ndl",
-          "p-nx-ndr"
-        ].forEach((id) => {
-          clampPreviewFont(document.getElementById(id), 14, 8);
-        });
-      }
+            function prom() {
+                state.hl = state.nhl;
+                state.hr = state.nhr;
+                state.dl = state.ndl;
+                state.dr = state.ndr;
+                state.t1n = state.nt1n;
+                state.t1p = state.nt1p;
+                state.t2n = state.nt2n;
+                state.t2p = state.nt2p;
+                state.t1s1 = 0;
+                state.t1s2 = 0;
+                state.t1s3 = 0;
+                state.t2s1 = 0;
+                state.t2s2 = 0;
+                state.t2s3 = 0;
+                state.bs1 = false;
+                state.bs2 = false;
+                state.bs3 = false;
+                //state.nhl = "";
+                //state.nhr = "";
+                //state.ndl = "";
+                //state.ndr = "";
+                state.nt1n = "";
+                state.nt1p = "";
+                state.nt2n = "";
+                state.nt2p = "";
+                state.route = "sb";
+                psh();
+                document.getElementById("i-t1n").value = state.t1n;
+                document.getElementById("i-t1p").value = state.t1p;
+                document.getElementById("i-t2n").value = state.t2n;
+                document.getElementById("i-t2p").value = state.t2p;
+                //document.getElementById("n-hl").value = "";
+                //document.getElementById("n-hr").value = "";
+                //document.getElementById("n-dl").value = "";
+                //document.getElementById("n-dr").value = "";
+                document.getElementById("n-t1n").value = "";
+                document.getElementById("n-t1p").value = "";
+                document.getElementById("n-t2n").value = "";
+                document.getElementById("n-t2p").value = "";
+                upd();
+            }
+            
+            // Update UI based on current state
+            function upd() {
+                // 1. Map incoming state scale to your control input field
+                if (document.getElementById("i-scale")) {
+                    document.getElementById("i-scale").value = state.scale || "1.0";
+                }
 
-      function prom() {
-        state.hl = state.nhl;
-        state.hr = state.nhr;
-        state.dl = state.ndl;
-        state.dr = state.ndr;
-        state.t1n = state.nt1n;
-        state.t1p = state.nt1p;
-        state.t2n = state.nt2n;
-        state.t2p = state.nt2p;
-        state.t1s1 = 0;
-        state.t1s2 = 0;
-        state.t1s3 = 0; 
-        state.t2s1 = 0;
-        state.t2s2 = 0;
-        state.t2s3 = 0;
-        state.nhl = "FPPBA - 5ta Sudeste - Fecha 2";
-        state.nhr = "16/5/2026";
-        state.ndl = "Centro Basko Necochea";
-        state.ndr = "Z1 - P1";
-        state.nt1n = "";
-        state.nt1p = "";
-        state.nt2n = "";
-        state.nt2p = "";
-        state.route = "sb";
-        psh();
-        document.getElementById("i-t1n").value = state.t1n;
-        document.getElementById("i-t1p").value = state.t1p;
-        document.getElementById("i-t2n").value = state.t2n;
-        document.getElementById("i-t2p").value = state.t2p;
-        document.getElementById("n-hl").value = "";
-        document.getElementById("n-hr").value = "";
-        document.getElementById("n-dl").value = "";
-        document.getElementById("n-dr").value = "";
-        document.getElementById("n-t1n").value = "";
-        document.getElementById("n-t1p").value = "";
-        document.getElementById("n-t2n").value = "";
-        document.getElementById("n-t2p").value = "";
-        upd();
-      }
+                // 2. Your original input mappings continue here:
+                // Update input field values from state
+                document.getElementById("i-hl").value = state.hl;
+                document.getElementById("i-hr").value = state.hr;
+                document.getElementById("i-dl").value = state.dl;
+                document.getElementById("i-dr").value = state.dr;
+                document.getElementById("i-tu").value = state.tu;
+                document.getElementById("i-t1n").value = state.t1n;
+                document.getElementById("i-t1p").value = state.t1p;
+                document.getElementById("i-t1l").value = state.t1l;
+                document.getElementById("i-t2n").value = state.t2n;
+                document.getElementById("i-t2p").value = state.t2p;
+                document.getElementById("i-t2l").value = state.t2l;
+                document.getElementById("n-hl").value = state.nhl;
+                document.getElementById("n-hr").value = state.nhr;
+                document.getElementById("n-dl").value = state.ndl;
+                document.getElementById("n-dr").value = state.ndr;
+                document.getElementById("n-t1n").value = state.nt1n;
+                document.getElementById("n-t1p").value = state.nt1p;
+                document.getElementById("n-t2n").value = state.nt2n;
+                document.getElementById("n-t2p").value = state.nt2p;
+                // Update score counts
+                document.getElementById("count-t1s1").innerText = state.t1s1;
+                document.getElementById("count-t1s2").innerText = state.t1s2;
+                document.getElementById("count-t1s3").innerText = state.t1s3;
+                document.getElementById("count-t2s1").innerText = state.t2s1;
+                document.getElementById("count-t2s2").innerText = state.t2s2;
+                document.getElementById("count-t2s3").innerText = state.t2s3;
+                // Update button states
+                document.getElementById("r-sb").className = "btn" + (state.route === "sb" ? " active" : "");
+                document.getElementById("r-nx").className = "btn" + (state.route === "nx" ? " active" : "");
+                document.getElementById("r-hd").className = "btn" + (state.route === "hd" ? " active" : "");
+                document.getElementById("cb-h").className = "btn" + (state.vh ? " active" : "");
+                document.getElementById("cb-tl").className = "btn" + (state.vt ? " active" : "");
+                document.getElementById("cb-d").className = "btn" + (state.vd ? " active" : "");
+                document.getElementById("cb-t1l").className = "btn" + (state.v1 ? " active" : "");
+                document.getElementById("cb-t2l").className = "btn" + (state.v2 ? " active" : "");
+                document.getElementById("cb-s1").className = "btn" + (state.bs1 ? " active" : "");
+                document.getElementById("cb-s2").className = "btn" + (state.bs2 ? " active" : "");
+                document.getElementById("cb-s3").className = "btn" + (state.bs3 ? " active" : "");
+            }
 
-      function upd() {
-        // 1. Map incoming state scale to your control input field
-        if (document.getElementById("i-scale")) {
-          document.getElementById("i-scale").value = state.scale || "1.0";
-        }
+            // Function to handle scale changes from the dropdown
+            function changeScale(val) {
+                state.scale = val; // Mutate local state variable
+                psh(); // Broadcast state out to Ably network
+            }
 
-        // 2. Your original input mappings continue here:
-        // Update input field values from state
-        document.getElementById("i-hl").value = state.hl;
-        document.getElementById("i-hr").value = state.hr;
-        document.getElementById("i-dl").value = state.dl;
-        document.getElementById("i-dl-val").value = state.dr;
-        document.getElementById("i-tu").value = state.tu;
-        document.getElementById("i-t1n").value = state.t1n;
-        document.getElementById("i-t1p").value = state.t1p;
-        document.getElementById("i-t1l").value = state.t1l;
-        document.getElementById("i-t2n").value = state.t2n;
-        document.getElementById("i-t2p").value = state.t2p;
-        document.getElementById("i-t2l").value = state.t2l;
-        document.getElementById("n-hl").value = state.nhl;
-        document.getElementById("n-hr").value = state.nhr;
-        document.getElementById("n-dl").value = state.ndl;
-        document.getElementById("n-dr").value = state.ndr;
-        document.getElementById("n-t1n").value = state.nt1n;
-        document.getElementById("n-t1p").value = state.nt1p;
-        document.getElementById("n-t2n").value = state.nt2n;
-        document.getElementById("n-t2p").value = state.nt2p;
+            // Function to apply match details from the input fields to the state and push updates
+            function applyMatchText() {
+                //Config
+                state.hl = document.getElementById("i-hl").value;
+                state.hr = document.getElementById("i-hr").value;
+                state.dl = document.getElementById("i-dl").value;
+                state.dr = document.getElementById("i-dr").value;
+                state.nhl = state.hl;
+                state.nhr = state.hr;
+                state.ndl = state.dl;
+                state.ndr = state.dr;
+                document.getElementById("n-hl").value = state.nhl;
+                document.getElementById("n-hr").value = state.nhr;
+                document.getElementById("n-dl").value = state.ndl;
+                document.getElementById("n-dr").value = state.ndr;
+                //T-Logo
+                const url = document.getElementById("i-tu").value;
+                state.tu = url;
+                state.vt = !!url;
+                //Match - Team1
+                state.t1n = document.getElementById("i-t1n").value;
+                state.t1p = document.getElementById("i-t1p").value;
+                const logoUrl1 = document.getElementById("i-t1l").value;
+                state.t1l = logoUrl1;
+                state.v1 = !!logoUrl1;
+                //Match - Team2
+                state.t2n = document.getElementById("i-t2n").value;
+                state.t2p = document.getElementById("i-t2p").value;
+                const logoUrl2 = document.getElementById("i-t2l").value;
+                state.t2l = logoUrl2;
+                state.v2 = !!logoUrl2;
+                psh();
+                upd();
+            }
 
-        // Update preview based on route
-        const sbPreview = document.getElementById("preview-scorebug");
-        const nxPreview = document.getElementById("preview-nextbox");
-        const pview = document.getElementById("pview");
+            function applyNextPrepText() {
+                state.nhl = document.getElementById("n-hl").value;
+                state.nhr = document.getElementById("n-hr").value;
+                state.ndl = document.getElementById("n-dl").value;
+                state.ndr = document.getElementById("n-dr").value;
+                state.nt1n = document.getElementById("n-t1n").value;
+                state.nt1p = document.getElementById("n-t1p").value;
+                state.nt2n = document.getElementById("n-t2n").value;
+                state.nt2p = document.getElementById("n-t2p").value;
+                psh();
+                upd();
+            }
 
-        if (state.route === "hd") {
-          pview.style.display = "none";
-        } else {
-          pview.style.display = "block";
-        }
+            // 5. Fire connection events only after DOM is ready and functions are mapped
+            document.addEventListener("DOMContentLoaded", function () {
+                const savedState = localStorage.getItem("pelota-scorebug-state");
+                if (savedState) {
+                try {
+                    state = JSON.parse(savedState);
+                    console.log("Remote loaded saved local state.");
+                } catch (err) {
+                    console.warn("Unable to parse saved state:", err);
+                }
+                }
 
-        if (state.route === "nx") {
-          sbPreview.style.display = "none";
-          nxPreview.style.display = "block";
-          document.getElementById("p-nx-nhl").innerText = state.nhl;
-          document.getElementById("p-nx-resultado-label").innerText = state.hr
-            ? "Resultado - " + state.hr
-            : "Resultado";
-          document.getElementById("p-nx-next-section-label").innerText = state.nhr
-            ? "Próximo Partido - " + state.nhr
-            : "Próximo Partido";
-          document.getElementById("p-nx-result-t1").innerText = state.t1n;
-          document.getElementById("p-nx-result-t1s1").innerText = state.t1s1;
-          document.getElementById("p-nx-result-t1s2").innerText = state.t1s2;
-          document.getElementById("p-nx-result-t1s3").innerText = state.t1s3;
-          document.getElementById("p-nx-result-t2").innerText = state.t2n;
-          document.getElementById("p-nx-result-t2s1").innerText = state.t2s1;
-          document.getElementById("p-nx-result-t2s2").innerText = state.t2s2;
-          document.getElementById("p-nx-result-t2s3").innerText = state.t2s3;
-          document.getElementById("p-nx-t1n").innerText = state.nt1n;
-          document.getElementById("p-nx-t2n").innerText = state.nt2n;
-          document.getElementById("p-nx-ndl").innerText = state.ndl;
-          document.getElementById("p-nx-ndr").innerText = state.ndr;
-          document.getElementById("p-nx-result-t1s1").classList.toggle("p-hidden", !state.bs1);
-          document.getElementById("p-nx-result-t2s1").classList.toggle("p-hidden", !state.bs1);
-          document.getElementById("p-nx-result-t1s2").classList.toggle("p-hidden", !state.bs2);
-          document.getElementById("p-nx-result-t2s2").classList.toggle("p-hidden", !state.bs2);
-          document.getElementById("p-nx-result-t1s3").classList.toggle("p-hidden", !state.bs3);
-          document.getElementById("p-nx-result-t2s3").classList.toggle("p-hidden", !state.bs3);
-        } else {
-          sbPreview.style.display = "block";
-          nxPreview.style.display = "none";
-        }
+                upd();
 
-        fitPreviewText();
+                ably.connection.on("connected", function () {
+                console.log("Remote controller connected to Ably.");
+                document.getElementById("connection-status").innerText =
+                    "Ably status: connected";
 
-        // Update preview overlay scorebug data
-        document.getElementById("p-hl").innerText = state.hl;
-        document.getElementById("p-hr").innerText = state.hr;
-        document.getElementById("p-dl").innerText = state.dl;
-        document.getElementById("p-dr").innerText = state.dr;
-        document.getElementById("p-t1n").innerText = state.t1n;
-        document.getElementById("p-t1p").innerText = state.t1p;
-        document.getElementById("p-t2n").innerText = state.t2n;
-        document.getElementById("p-t2p").innerText = state.t2p;
-        document.getElementById("p-t1s1").innerText = state.t1s1;
-        document.getElementById("p-t1s2").innerText = state.t1s2;
-        document.getElementById("p-t1s3").innerText = state.t1s3;
-        document.getElementById("p-t2s1").innerText = state.t2s1;
-        document.getElementById("p-t2s2").innerText = state.t2s2;
-        document.getElementById("p-t2s3").innerText = state.t2s3;
-        document.getElementById("count-t1s1").innerText = state.t1s1;
-        document.getElementById("count-t1s2").innerText = state.t1s2;
-        document.getElementById("count-t1s3").innerText = state.t1s3;
-        document.getElementById("count-t2s1").innerText = state.t2s1;
-        document.getElementById("count-t2s2").innerText = state.t2s2;
-        document.getElementById("count-t2s3").innerText = state.t2s3;
-        document
-          .getElementById("p-t-logo")
-          .classList.toggle("p-hidden", !state.vt);
-        document
-          .getElementById("p-t1l")
-          .classList.toggle("p-hidden", !state.v1);
-        document
-          .getElementById("p-t2l")
-          .classList.toggle("p-hidden", !state.v2);
-        document
-          .getElementById("p-t1s1")
-          .classList.toggle("p-hidden", !state.bs1);
-        document
-          .getElementById("p-t2s1")
-          .classList.toggle("p-hidden", !state.bs1);
-        document
-          .getElementById("p-t1s2")
-          .classList.toggle("p-hidden", !state.bs2);
-        document
-          .getElementById("p-t2s2")
-          .classList.toggle("p-hidden", !state.bs2);
-        document
-          .getElementById("p-t1s3")
-          .classList.toggle("p-hidden", !state.bs3);
-        document
-          .getElementById("p-t2s3")
-          .classList.toggle("p-hidden", !state.bs3);
-        //document.getElementById("p-t-logo").style.backgroundImage = state.tu
-        //  ? "url('" + state.tu + "')"
-        //  : "url('./images/LogoCBpelotarisNuevo.jpeg')";
-        const logoElement = document.getElementById("p-t-logo");
-        if(logoElement) {
-            logoElement.src = (state.tu && state.tu.trim())
-                ? state.tu
-                : "./images/LogoCBpelotarisNuevo.jpeg"; 
-        }
-        document.getElementById("p-t1l").style.backgroundImage = state.t1l
-          ? "url('" + state.t1l + "')"
-          : "none";
-        document.getElementById("p-t2l").style.backgroundImage = state.t2l
-          ? "url('" + state.t2l + "')"
-          : "none";
+                chan.subscribe("u", function (m) {
+                    state = m.data;
+                    upd();
+                });
+                });
 
-        // Update button states
-        document.getElementById("r-sb").className =
-          "btn" + (state.route === "sb" ? " active" : "");
-        document.getElementById("r-nx").className =
-          "btn" + (state.route === "nx" ? " active" : "");
-        document.getElementById("r-hd").className =
-          "btn" + (state.route === "hd" ? " active" : "");
-        document.getElementById("cb-h").className =
-          "btn" + (state.vh ? " active" : "");
-        document.getElementById("cb-tl").className =
-          "btn" + (state.vt ? " active" : "");
-        document.getElementById("cb-d").className =
-          "btn" + (state.vd ? " active" : "");
-        document.getElementById("cb-t1l").className =
-          "btn" + (state.v1 ? " active" : "");
-        document.getElementById("cb-t2l").className =
-          "btn" + (state.v2 ? " active" : "");
-        document.getElementById("cb-s1").className =
-          "btn" + (state.bs1 ? " active" : "");
-        document.getElementById("cb-s2").className =
-          "btn" + (state.bs2 ? " active" : "");
-        document.getElementById("cb-s3").className =
-          "btn" + (state.bs3 ? " active" : "");
-      }
+                ably.connection.on("failed", function (err) {
+                const message =
+                    err && err.reason
+                    ? err.reason
+                    : err && err.message
+                        ? err.message
+                        : "Unknown Ably error";
+                console.warn(
+                    "Ably connection failed, local fallback enabled:",
+                    message,
+                );
+                document.getElementById("connection-status").innerText =
+                    "Ably status: failed — " + message;
+                });
 
-      function changeScale(val) {
-        state.scale = val; // Mutate local state variable
-        psh(); // Broadcast state out to Ably network
-      }
-
-      // Confirm button functions for text changes
-      function applyConfigText() {
-        state.hl = document.getElementById("i-hl").value;
-        state.hr = document.getElementById("i-hr").value;
-        state.dl = document.getElementById("i-dl").value;
-        state.dr = document.getElementById("i-dl-val").value;
-        state.nhl = state.hl;
-        state.nhr = state.hr;
-        state.ndl = state.dl;
-        state.ndr = state.dr;
-        document.getElementById("n-hl").value = state.nhl;
-        document.getElementById("n-hr").value = state.nhr;
-        document.getElementById("n-dl").value = state.ndl;
-        document.getElementById("n-dr").value = state.ndr;
-        psh();
-        upd();
-      }
-
-      function applyTournLogo() {
-        const url = document.getElementById("i-tu").value;
-        state.tu = url;
-        state.vt = !!url;
-        psh();
-        upd();
-      }
-
-      function applyTeamsText() {
-        state.t1n = document.getElementById("i-t1n").value;
-        state.t1p = document.getElementById("i-t1p").value;
-        const logoUrl1 = document.getElementById("i-t1l").value;
-        state.t1l = logoUrl1;
-        state.v1 = !!logoUrl1;
-        state.t2n = document.getElementById("i-t2n").value;
-        state.t2p = document.getElementById("i-t2p").value;
-        const logoUrl2 = document.getElementById("i-t2l").value;
-        state.t2l = logoUrl2;
-        state.v2 = !!logoUrl2;
-        psh();
-        upd();
-      }
-
-      function applyNextPrepText() {
-        state.nhl = document.getElementById("n-hl").value;
-        state.nhr = document.getElementById("n-hr").value;
-        state.ndl = document.getElementById("n-dl").value;
-        state.ndr = document.getElementById("n-dr").value;
-        state.nt1n = document.getElementById("n-t1n").value;
-        state.nt1p = document.getElementById("n-t1p").value;
-        state.nt2n = document.getElementById("n-t2n").value;
-        state.nt2p = document.getElementById("n-t2p").value;
-        psh();
-        upd();
-      }
-
-      // 5. Fire connection events only after DOM is ready and functions are mapped
-      document.addEventListener("DOMContentLoaded", function () {
-        const savedState = localStorage.getItem("pelota-scorebug-state");
-        if (savedState) {
-          try {
-            state = JSON.parse(savedState);
-            console.log("Remote loaded saved local state.");
-          } catch (err) {
-            console.warn("Unable to parse saved state:", err);
-          }
-        }
-
-        upd();
-
-        ably.connection.on("connected", function () {
-          console.log("Remote controller connected to Ably.");
-          document.getElementById("connection-status").innerText =
-            "Ably status: connected";
-
-          chan.subscribe("u", function (m) {
-            state = m.data;
-            upd();
-          });
-        });
-
-        ably.connection.on("failed", function (err) {
-          const message =
-            err && err.reason
-              ? err.reason
-              : err && err.message
-              ? err.message
-              : "Unknown Ably error";
-          console.warn("Ably connection failed, local fallback enabled:", message);
-          document.getElementById("connection-status").innerText =
-            "Ably status: failed — " + message;
-        });
-
-        ably.connection.on("disconnected", function () {
-          document.getElementById("connection-status").innerText =
-            "Ably status: disconnected";
-        });
-      });
-    </script>
-  </body>
+                ably.connection.on("disconnected", function () {
+                document.getElementById("connection-status").innerText =
+                    "Ably status: disconnected";
+                });
+            });
+        </script>
+    </body>
 </html>

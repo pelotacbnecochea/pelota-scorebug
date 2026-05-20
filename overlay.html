@@ -1,502 +1,580 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tanteador de Pelota</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <script src="default-state.js?v=20260515"></script>
     <style>
-      :root {
-        --bg1: #111;
-        --bg2: #1a1a1a;
-        --text1: #fff;
-        --text2: #aaa;
-        --accent: #d4af37;
-        --box: #222;
-      }
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: transparent;
-        overflow: hidden;
-        color: #fff;
-      }
-      #prism-overlay {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        width: auto;
-        min-width: 250px;
-        display: flex;
-        flex-direction: column;
-        font-weight: bold;
-        transform-origin: top left;
-        transition: transform 0.2s ease;
-      }
-      .row {
-        display: flex;
-        align-items: stretch;
-        background: var(--bg1);
-        color: var(--text1);
-        overflow: hidden;
-      }
-      #h-row {
-        background: var(--bg2);
-        color: var(--text2);
-        font-size: 13px;
-        text-transform: uppercase;
-        padding: 6px 12px;
-        display: flex;
-        justify-content: space-between;
-        gap: 30px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      #t-logo {  
-        height: 100%;         /* Takes full height of the parent */
-        width: 100px;          /* Automatically calculates dynamic width based on the image's shape */
-        min-width: 60px;      /* Ensures it never gets smaller than 60px */
-        flex: none;           /* Prevents flexbox from squeezing the image */
-        align-self: stretch;  /* Stretches to match parent container height */
-        
-        object-fit: contain;  /* Scale image smoothly without cropping or distorting */
-        background: var(--bg2);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      .t-container {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .t-wrap {
-        display: flex;
-        align-items: center;
-        padding: 5px 12px;
-        height: 38px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      .t-img {
-        width: 32px;
-        height: 32px;
-        margin-right: 10px;
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-      }
-      .t-txt {
-        display: flex;
-        flex-direction: column;
-      }
-      .t-name {
-        font-size: 17px;
-      }
-      .t-play {
-        font-size: 11px;
-        color: var(--text2);
-        font-weight: normal;
-        margin-top: 1px;
-      }
-      .score-panel {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        margin-left: 10px;
-      }
-      .s-boxes {
-        display: flex;
-      }
-      .s-box {
-        width: 45px;
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        background: var(--box);
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      .m-box {
-        background: var(--bg2);
-        color: var(--text2);
-        border-right: 2px solid var(--text2);
-      }
-      #d-row {
-        background: var(--bg2);
-        font-size: 12px;
-        padding: 5px 12px;
-        display: flex;
-        justify-content: space-between;
-        gap: 30px;
-        color: var(--text2);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      #next-box {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 90%;
-        max-width: 580px;
-        background: rgba(17, 17, 17, 0.98);
-        border: 3px solid var(--text2);
-        padding: 30px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-        box-sizing: border-box;
-      }
-      #next-title {
-        font-size: 22px;
-        color: var(--text2);
-        text-transform: uppercase;
-        margin-bottom: 25px;
-        letter-spacing: 2px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 10px;
-      }
-      .next-meta-row {
-        display: flex;
-        justify-content: flex-start;
-        gap: 6px;
-        align-items: center;
-        margin-bottom: 16px;
-        font-size: 14px;
-        color: var(--text2);
-        min-height: 1.3em;
-      }
-      .dropline-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 6px;
-        align-items: center;
-        margin-bottom: 16px;
-        font-size: 14px;
-        color: var(--text2);
-        min-height: 1.3em;
-      }
-      .next-meta-row span,
-      .dropline-row span {
-        flex: none;
-        min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-      }
-      .next-meta-row span:last-child {
-        text-align: left;
-      }
-      .dropline-row span:last-child {
-        text-align: right;
-      }
-      .resultado-label,
-      .next-section-label {
-        display: block;
-        font-size: 12px;
-        color: var(--text2);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-      }
-      .result-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 16px;
-        font-size: 14px;
-        color: #fff;
-        margin-bottom: 8px;
-      }
-      .result-team-name {
-        font-weight: bold;
-        flex: none;
-        min-width: 0;
-        text-align: center;
-      }
-      .result-scores {
-        display: inline-flex;
-        gap: 8px;
-        justify-content: center;
-      }
-      .result-scores span {
-        min-width: 24px;
-        padding: 4px 6px;
-        background: var(--box);
-        border-radius: 4px;
-        font-weight: bold;
-      }
-      .next-separator {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.1);
-        margin: 20px 0;
-      }
-      .next-section-label {
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        font-size: 12px;
-        margin-bottom: 12px;
-      }
-      .next-match-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 14px;
-        font-size: 20px;
-        font-weight: bold;
-        color: #fff;
-        margin-bottom: 18px;
-      }
-      .next-match-vs {
-        color: var(--text2);
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-      .hidden {
-        display: none !important;
-      }
+        :root {
+            --bg1: #111;
+            --bg2: #1a1a1a;
+            --text1: #fff;
+            --text2: #aaa;
+            --accent: #d4af37;
+            --box: #222;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            overflow: hidden;
+            color: #fff;
+        }
+        #prism-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: auto;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            font-weight: bold;
+            transform-origin: top left;
+            transition: transform 0.2s ease;
+        }
+        .row {
+            display: flex;
+            align-items: stretch;
+            background: var(--bg1);
+            color: var(--text1);
+            overflow: hidden;
+        }
+        #h-row {
+            background: var(--bg2);
+            color: var(--text2);
+            font-size: 13px;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #t-logo {  
+            height: 100%;         /* Takes full height of the parent */
+            width: 100px;          /* Automatically calculates dynamic width based on the image's shape */
+            min-width: 60px;      /* Ensures it never gets smaller than 60px */
+            flex: none;           /* Prevents flexbox from squeezing the image */
+            align-self: stretch;  /* Stretches to match parent container height */
+            
+            object-fit: contain;  /* Scale image smoothly without cropping or distorting */
+            background: var(--bg2);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .t-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .t-wrap {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            height: 38px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .t-img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .t-txt {
+            display: flex;
+            flex-direction: column;
+        }
+        .t-name {
+            font-size: 17px;
+        }
+        .t-play {
+            font-size: 11px;
+            color: var(--text2);
+            font-weight: normal;
+            margin-top: 1px;
+        }
+        .score-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin-left: 10px;
+        }
+        .s-boxes {
+            display: flex;
+        }
+        .s-box {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--box);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .m-box {
+            background: var(--bg2);
+            color: var(--text2);
+            border-right: 2px solid var(--text2);
+        }
+        #d-row {
+            background: var(--bg2);
+            font-size: 12px;
+            padding: 5px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            color: var(--text2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #next-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 580px;
+            background: rgba(17, 17, 17, 0.98);
+            border: 3px solid var(--text2);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            box-sizing: border-box;
+        }
+        #next-title {
+            font-size: 22px;
+            color: var(--text2);
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .next-meta-row {
+            display: flex;
+            justify-content: flex-start;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--text2);
+            min-height: 1.3em;
+        }
+        .dropline-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            align-items: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text2);
+            min-height: 1.3em;
+        }
+        .next-meta-row span,
+        .dropline-row span {
+            flex: none;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+        }
+        .next-meta-row span:last-child {
+            text-align: left;
+        }
+        .dropline-row span:last-child {
+            text-align: right;
+        }
+        .resultado-label,
+        .next-section-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .results-container {
+            display: grid;
+            grid-template-columns: max-content 1fr; /* first column sized to the largest team name across rows */
+            justify-content: center;    /* center the whole block horizontally in its parent */
+            justify-items: start;       /* <-- align each grid cell to the left */
+            align-items: center;        /* center rows vertically inside their grid cells */
+            gap: 8px 16px;              /* row-gap column-gap */
+            width: max-content;         /* shrink to content so margin:auto centers it */
+            margin: 0 auto;             /* center horizontally */
+            box-sizing: border-box;
+        }
+        .result-row {
+            display: contents; /* children will occupy the parent's grid columns */
+        }
+        .comment{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .result-team-name {
+            font-weight: bold;
+            display: inline-flex;
+            gap: 8px;
+            padding: 4px 6px;
+            min-width: 0;
+            text-align: center;
+        }
+        .result-scores {
+            display: inline-flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .result-scores span {
+            min-width: 24px;
+            padding: 4px 6px;
+            background: var(--box);
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .next-separator {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+        }
+        .next-section-label {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        .next-match-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 18px;
+        }
+        .next-match-vs {
+            color: var(--text2);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .hidden {
+            display: none !important;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div id="prism-overlay" class="hidden">
-      <div id="h-row" class="row">
-        <span id="hl">Encabezado 1</span>
-        <span id="hr">Encabezado 2</span>
-      </div>
-      <div class="row">
-        <img id="t-logo" alt="logo" class="hidden"></img>
-        <div class="t-container">
-          <div class="t-wrap">
-            <div id="t1l" class="t-img hidden"></div>
-            <div class="t-txt">
-              <span id="t1n" class="t-name">Equipo 1</span
-              ><span id="t1p" class="t-play">Jugadores 1</span>
-            </div>
-          </div>
-          <div class="t-wrap">
-            <div id="t2l" class="t-img hidden"></div>
-            <div class="t-txt">
-              <span id="t2n" class="t-name">Equipo 2</span
-              ><span id="t2p" class="t-play">Jugadores 2</span>
-            </div>
-          </div>
+        <div id="h-row" class="row">
+            <span id="hl">Encabezado 1</span>
+            <span id="hr">Encabezado 2</span>
         </div>
-        <div class="score-panel">
-          <div class="s-boxes">
-            <div id="t1s1" class="s-box">0</div>
-            <div id="t1s2" class="s-box">0</div>
-            <div id="t1s3" class="s-box">0</div>
-          </div>
-          <div class="s-boxes">
-            <div id="t2s1" class="s-box">0</div>
-            <div id="t2s2" class="s-box">0</div>
-            <div id="t2s3" class="s-box">0</div>
-          </div>
+        <div class="row">
+            <img id="t-logo" alt="logo" class="hidden"></img>
+            <div class="t-container">
+                <div class="t-wrap">
+                    <div id="t1l" class="t-img hidden"></div>
+                    <div class="t-txt">
+                        <span id="t1n" class="t-name">Equipo 1</span>
+                        <span id="t1p" class="t-play">Jugadores 1</span>
+                    </div>
+                </div>
+                <div class="t-wrap">
+                    <div id="t2l" class="t-img hidden"></div>
+                    <div class="t-txt">
+                        <span id="t2n" class="t-name">Equipo 2</span>
+                        <span id="t2p" class="t-play">Jugadores 2</span>
+                    </div>
+                </div>
+            </div>
+            <div class="score-panel">
+                <div class="s-boxes">
+                    <div id="t1s1" class="s-box">0</div>
+                    <div id="t1s2" class="s-box">0</div>
+                    <div id="t1s3" class="s-box">0</div>
+                </div>
+                <div class="s-boxes">
+                    <div id="t2s1" class="s-box">0</div>
+                    <div id="t2s2" class="s-box">0</div>
+                    <div id="t2s3" class="s-box">0</div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div id="d-row" class="row">
-        <span id="dl">Pie de línea 1</span>
-        <span id="dr">Pie de línea 2</span>
-      </div>
+        <div id="d-row" class="row">
+            <span id="dl">Pie de línea 1</span>
+            <span id="dr">Pie de línea 2</span>
+        </div>
     </div>
 
     <div id="next-box" class="hidden">
-      <div class="next-meta-row">
-        <span id="nx-nhl">Encabezado 1</span>
-      </div>
-      <div id="nx-resultado-label" class="resultado-label">Resultado</div>
-      <div class="result-row">
-        <span id="nx-result-t1" class="result-team-name">Equipo 1</span>
-        <span class="result-scores">
-          <span id="nx-result-t1s1">0</span>
-          <span id="nx-result-t1s2">0</span>
-          <span id="nx-result-t1s3">0</span>
-        </span>
-      </div>
-      <div class="result-row">
-        <span id="nx-result-t2" class="result-team-name">Equipo 2</span>
-        <span class="result-scores">
-          <span id="nx-result-t2s1">0</span>
-          <span id="nx-result-t2s2">0</span>
-          <span id="nx-result-t2s3">0</span>
-        </span>
-      </div>
-      <div class="next-separator"></div>
-      <div id="nx-next-section-label" class="next-section-label">Próximo Partido</div>
-      <div class="next-match-row">
-        <span id="nx-t1n">Next Team 1</span>
-        <span class="next-match-vs">vs</span>
-        <span id="nx-t2n">Next Team 2</span>
-      </div>
-      <div class="dropline-row">
-        <span id="nx-ndl">Pie de línea 1</span>
-        <span id="nx-ndr">Pie de línea 2</span>
-      </div>
+        <div class="next-meta-row">
+            <span id="nx-nhl">Encabezado 1</span>
+        </div>
+        <div id="nx-resultado-label" class="resultado-label">Resultado</div>
+        <div class="results-container">
+            <div class="result-row">
+            <span id="nx-result-t1" class="result-team-name">Equipo 1</span>
+            <span class="result-scores">
+                <span id="nx-result-t1s1">0</span>
+                <span id="nx-result-t1s2">0</span>
+                <span id="nx-result-t1s3">0</span>
+            </span>
+            </div>
+            <div class="result-row">
+            <span id="nx-result-t2" class="result-team-name">Equipo 2</span>
+            <span class="result-scores">
+                <span id="nx-result-t2s1">0</span>
+                <span id="nx-result-t2s2">0</span>
+                <span id="nx-result-t2s3">0</span>
+            </span>
+            </div>
+        </div>
+        <div class="next-separator"></div>
+        <div id="nx-next-section-label" class="next-section-label">Próximo Partido</div>
+        <div class="next-match-row">
+            <span id="nx-t1n">Next Team 1</span>
+            <span class="next-match-vs">vs</span>
+            <span id="nx-t2n">Next Team 2</span>
+        </div>
+        <div class="dropline-row">
+            <span id="nx-ndl">Pie de línea 1</span>
+            <span id="nx-ndr">Pie de línea 2</span>
+        </div>
     </div>
 
     <script>
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("auth") !== "7630") {
-        window.location.href = "index.html";
-      }
-
-      const ABLY_KEY =
-        urlParams.get("ablyKey") ||
-        "0iWGhA.FW3w1g:EMD5WZ2N_sE9rzhKdMJ9im2thlS0IJ5cAcf-WhAlTAw";
-      const ably = new Ably.Realtime({
-        key: ABLY_KEY,
-        clientId: "overlay-" + Math.random().toString(36).slice(2),
-      });
-      const chan = ably.channels.get("p-neco", {
-        params: { rewind: "1" }
-      });
-
-      function updateOverlay(s) {
-        // 1. Fallback to 1.0 if scale is undefined, and assign it directly
-        const scaleFactor = s.scale || "1.0";
-        const overlayEl = document.getElementById("prism-overlay");
-
-        overlayEl.style.transformOrigin = "top left"; // Keeps widget anchored to the corner when scaling
-        overlayEl.style.transform = "scale(" + scaleFactor + ")";
-
-        // 2. Rest of your original overlay logic proceeds flawlessly
-        overlayEl.classList.toggle("hidden", s.route !== "sb");
-        document
-          .getElementById("next-box")
-          .classList.toggle("hidden", s.route !== "nx");
-        if (s.route === "sb") {
-          document.getElementById("hl").innerText = s.hl;
-          document.getElementById("hr").innerText = s.hr;
-          document.getElementById("dl").innerText = s.dl;
-          document.getElementById("dr").innerText = s.dr;
-          document.getElementById("t1n").innerText = s.t1n;
-          document.getElementById("t1p").innerText = s.t1p;
-          document.getElementById("t2n").innerText = s.t2n;
-          document.getElementById("t2p").innerText = s.t2p;
-          document.getElementById("t1s1").innerText = s.t1s1;
-          document.getElementById("t1s2").innerText = s.t1s2;
-          document.getElementById("t1s3").innerText = s.t1s3;
-          document.getElementById("t2s1").innerText = s.t2s1;
-          document.getElementById("t2s2").innerText = s.t2s2;
-          document.getElementById("t2s3").innerText = s.t2s3;
-          document.getElementById("h-row").classList.toggle("hidden", !s.vh);
-          document.getElementById("t-logo").classList.toggle("hidden", !s.vt);
-          document.getElementById("d-row").classList.toggle("hidden", !s.vd);
-          document.getElementById("t1l").classList.toggle("hidden", !s.v1);
-          document.getElementById("t2l").classList.toggle("hidden", !s.v2);
-          document.getElementById("t1s1").classList.toggle("hidden", !s.bs1);
-          document.getElementById("t2s1").classList.toggle("hidden", !s.bs1);
-          document.getElementById("t1s2").classList.toggle("hidden", !s.bs2);
-          document.getElementById("t2s2").classList.toggle("hidden", !s.bs2);
-          document.getElementById("t1s3").classList.toggle("hidden", !s.bs3);
-          document.getElementById("t2s3").classList.toggle("hidden", !s.bs3);
-          //document.getElementById("t-logo").style.backgroundImage = s.tu
-          //  ? "url('" + s.tu + "')"
-          //  : "url('./images/LogoCBpelotarisNuevo.jpeg')";
-          document.getElementById("t-logo").src = (s.tu && s.tu.trim())
-            ? s.tu
-            : "./images/LogoCBpelotarisNuevo.jpeg"; 
-          document.getElementById("t1l").style.backgroundImage = s.t1l
-            ? "url('" + s.t1l + "')"
-            : "none";
-          document.getElementById("t2l").style.backgroundImage = s.t2l
-            ? "url('" + s.t2l + "')"
-            : "none";
-        } else if (s.route === "nx") {
-          document.getElementById("nx-nhl").innerText = s.nhl;
-          document.getElementById("nx-resultado-label").innerText = s.hr
-            ? "Resultado - " + s.hr
-            : "Resultado";
-          document.getElementById("nx-next-section-label").innerText = s.nhr
-            ? "Próximo Partido - " + s.nhr
-            : "Próximo Partido";
-          document.getElementById("nx-result-t1").innerText = s.t1n;
-          document.getElementById("nx-result-t1s1").innerText = s.t1s1;
-          document.getElementById("nx-result-t1s2").innerText = s.t1s2;
-          document.getElementById("nx-result-t1s3").innerText = s.t1s3;
-          document.getElementById("nx-result-t2").innerText = s.t2n;
-          document.getElementById("nx-result-t2s1").innerText = s.t2s1;
-          document.getElementById("nx-result-t2s2").innerText = s.t2s2;
-          document.getElementById("nx-result-t2s3").innerText = s.t2s3;
-          document.getElementById("nx-result-t1s1").classList.toggle("hidden", !s.bs1);
-          document.getElementById("nx-result-t2s1").classList.toggle("hidden", !s.bs1);
-          document.getElementById("nx-result-t1s2").classList.toggle("hidden", !s.bs2);
-          document.getElementById("nx-result-t2s2").classList.toggle("hidden", !s.bs2);
-          document.getElementById("nx-result-t1s3").classList.toggle("hidden", !s.bs3);
-          document.getElementById("nx-result-t2s3").classList.toggle("hidden", !s.bs3);
-          document.getElementById("nx-t1n").innerText = s.nt1n;
-          document.getElementById("nx-t2n").innerText = s.nt2n;
-          document.getElementById("nx-ndl").innerText = s.ndl;
-          document.getElementById("nx-ndr").innerText = s.ndr;
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("auth") !== "7630") {
+            window.location.href = "index.html";
         }
-      }
-
-      // Default state is loaded from default-state.js instead of embedded in HTML.
-
-      // WAIT FOR THE BROWSER TO BE READY BEFORE RUNNING ANYTHING
-      document.addEventListener("DOMContentLoaded", function () {
-        try {
-          updateOverlay(OVERLAY_DEFAULT_STATE);
-          console.log("Overlay initialized with default shared state successfully.");
-
-          const savedState = localStorage.getItem("pelota-scorebug-state");
-          if (savedState) {
-            try {
-              updateOverlay(JSON.parse(savedState));
-              console.log("Overlay loaded from localStorage fallback state.");
-            } catch (parseErr) {
-              console.warn("Unable to parse saved overlay state:", parseErr);
-            }
-          }
-        } catch (err) {
-          console.error("Initialization error (check your HTML IDs):", err);
-        }
-
-        window.addEventListener("storage", function (event) {
-          if (event.key === "pelota-scorebug-state" && event.newValue) {
-            try {
-              const fallback = JSON.parse(event.newValue);
-              updateOverlay(fallback);
-            } catch (err) {
-              console.warn("Failed to apply localStorage fallback state:", err);
-            }
-          }
+        
+        const ABLY_KEY =
+            urlParams.get("ablyKey") ||
+            "0iWGhA.FW3w1g:EMD5WZ2N_sE9rzhKdMJ9im2thlS0IJ5cAcf-WhAlTAw";
+        const ably = new Ably.Realtime({
+            key: ABLY_KEY,
+            clientId: "overlay-" + Math.random().toString(36).slice(2),
+        });
+        const chan = ably.channels.get("p-neco", {
+            params: { rewind: "1" }
         });
 
-        // 2. Subscribe to Ably ONLY after the page is fully ready
-        /*chan.subscribe('u', function(m) {
-                console.log("Incoming Real-time State Payload:", m.data);
-                try {
-                    updateOverlay(m.data);
-                } catch(err) {
-                    console.error("Error applying real-time data to HTML:", err);
+        function updateOverlay(s) {
+            // 1. Fallback to 1.0 if scale is undefined, and assign it directly
+            const scaleFactor = s.scale || "1.0";
+            const overlayEl = document.getElementById("prism-overlay");
+            const nextBoxEl = document.getElementById("next-box");
+
+            overlayEl.style.transformOrigin = "top left"; // Keeps widget anchored to the corner when scaling
+            overlayEl.style.transform = "scale(" + scaleFactor + ")";
+
+            // VISIBILIDAD: solo aplicar si el payload viene marcado como live
+            if (s.live) {
+                // mostrar/ocultar según ruta cuando es LIVE
+                overlayEl.classList.toggle("hidden", s.route !== "sb");
+                nextBoxEl.classList.toggle("hidden", s.route !== "nx");
+            } else {
+                // si no es live, aseguramos que estén ocultos en el overlay remoto
+                overlayEl.classList.add("hidden");
+                nextBoxEl.classList.add("hidden");
+            }
+
+            // 2. Rest of your original overlay logic proceeds flawlessly
+            //overlayEl.classList.toggle("hidden", s.route !== "sb");
+            //nextBoxEl.classList.toggle("hidden", s.route !== "nx");
+            if (s.route === "sb") {
+                document.getElementById("hl").innerText = s.hl;
+                document.getElementById("hr").innerText = s.hr;
+                document.getElementById("dl").innerText = s.dl;
+                document.getElementById("dr").innerText = s.dr;
+                document.getElementById("t1n").innerText = s.t1n;
+                document.getElementById("t1p").innerText = s.t1p;
+                document.getElementById("t2n").innerText = s.t2n;
+                document.getElementById("t2p").innerText = s.t2p;
+                document.getElementById("t1s1").innerText = s.t1s1;
+                document.getElementById("t1s2").innerText = s.t1s2;
+                document.getElementById("t1s3").innerText = s.t1s3;
+                document.getElementById("t2s1").innerText = s.t2s1;
+                document.getElementById("t2s2").innerText = s.t2s2;
+                document.getElementById("t2s3").innerText = s.t2s3;
+                document.getElementById("h-row").classList.toggle("hidden", !s.vh);
+                document.getElementById("t-logo").classList.toggle("hidden", !s.vt);
+                document.getElementById("d-row").classList.toggle("hidden", !s.vd);
+                document.getElementById("t1l").classList.toggle("hidden", !s.v1);
+                document.getElementById("t2l").classList.toggle("hidden", !s.v2);
+                document.getElementById("t1s1").classList.toggle("hidden", !s.bs1);
+                document.getElementById("t2s1").classList.toggle("hidden", !s.bs1);
+                document.getElementById("t1s2").classList.toggle("hidden", !s.bs2);
+                document.getElementById("t2s2").classList.toggle("hidden", !s.bs2);
+                document.getElementById("t1s3").classList.toggle("hidden", !s.bs3);
+                document.getElementById("t2s3").classList.toggle("hidden", !s.bs3);
+                //document.getElementById("t-logo").style.backgroundImage = s.tu
+                //  ? "url('" + s.tu + "')"
+                //  : "url('./images/LogoCBpelotarisNuevo.jpeg')";
+                document.getElementById("t-logo").src = (s.tu && s.tu.trim())
+                    ? s.tu
+                    : "./images/LogoCBpelotarisNuevo.jpeg"; 
+                document.getElementById("t1l").style.backgroundImage = s.t1l
+                    ? "url('" + s.t1l + "')"
+                    : "none";
+                document.getElementById("t2l").style.backgroundImage = s.t2l
+                    ? "url('" + s.t2l + "')"
+                    : "none";
+            } else if (s.route === "nx") {
+                document.getElementById("nx-nhl").innerText = s.nhl;
+                document.getElementById("nx-resultado-label").innerText = s.hr
+                    ? "Resultado - " + s.hr
+                    : "Resultado";
+                document.getElementById("nx-next-section-label").innerText = s.nhr
+                    ? "Próximo Partido - " + s.nhr
+                    : "Próximo Partido";
+                document.getElementById("nx-result-t1").innerText = s.t1n;
+                document.getElementById("nx-result-t1s1").innerText = s.t1s1;
+                document.getElementById("nx-result-t1s2").innerText = s.t1s2;
+                document.getElementById("nx-result-t1s3").innerText = s.t1s3;
+                document.getElementById("nx-result-t2").innerText = s.t2n;
+                document.getElementById("nx-result-t2s1").innerText = s.t2s1;
+                document.getElementById("nx-result-t2s2").innerText = s.t2s2;
+                document.getElementById("nx-result-t2s3").innerText = s.t2s3;
+                document.getElementById("nx-result-t1s1").classList.toggle("hidden", !s.bs1);
+                document.getElementById("nx-result-t2s1").classList.toggle("hidden", !s.bs1);
+                document.getElementById("nx-result-t1s2").classList.toggle("hidden", !s.bs2);
+                document.getElementById("nx-result-t2s2").classList.toggle("hidden", !s.bs2);
+                document.getElementById("nx-result-t1s3").classList.toggle("hidden", !s.bs3);
+                document.getElementById("nx-result-t2s3").classList.toggle("hidden", !s.bs3);
+                document.getElementById("nx-t1n").innerText = s.nt1n;
+                document.getElementById("nx-t2n").innerText = s.nt2n;
+                document.getElementById("nx-ndl").innerText = s.ndl;
+                document.getElementById("nx-ndr").innerText = s.ndr;
+            }
+        }
+
+        // Default state is loaded from default-state.js instead of embedded in HTML.
+
+        // WAIT FOR THE BROWSER TO BE READY BEFORE RUNNING ANYTHING
+        document.addEventListener("DOMContentLoaded", function () {
+            try {
+                updateOverlay(OVERLAY_DEFAULT_STATE);
+                console.log("Overlay initialized with default shared state successfully.");
+
+                const savedState = localStorage.getItem("pelota-scorebug-state");
+                if (savedState) {
+                    try {
+                        updateOverlay(JSON.parse(savedState));
+                        console.log("Overlay loaded from localStorage fallback state.");
+                    } catch (parseErr) {
+                        console.warn("Unable to parse saved overlay state:", parseErr);
+                    }
                 }
-            });*/
+            } catch (err) {
+                console.error("Initialization error (check your HTML IDs):", err);
+            }
 
-        // 5. Explicitly wait for Ably to connect before registering the subscription
-        ably.connection.on("connected", function () {
-          console.log("Ably connected successfully. Subscribing to channel...");
+            window.addEventListener("storage", function (event) {
+                if (event.key === "pelota-scorebug-state" && event.newValue) {
+                    try {
+                        const fallback = JSON.parse(event.newValue);
+                        updateOverlay(fallback);
+                    } catch (err) {
+                        console.warn("Failed to apply localStorage fallback state:", err);
+                    }
+                }
+            });
 
-          chan.subscribe("u", function (m) {
-            updateOverlay(m.data);
-          });
+            // 5. Explicitly wait for Ably to connect before registering the subscription
+            ably.connection.on("connected", function () {
+                console.log("Ably connected successfully. Subscribing to channel...");
+
+                chan.subscribe("u", function (m) {
+                    //updateOverlay(m.data);
+                    const payload = m.data || {};
+                    if (payload.live) {
+                        updateOverlay(payload);
+                    } else {
+                        // ignorar payloads no-live
+                        console.log('Ignored non-live payload');
+                    }
+                });
+            });
+
+            ably.connection.on("failed", function (err) {
+                const message =
+                    err && err.reason
+                        ? err.reason
+                        : err && err.message
+                            ? err.message
+                            : "Unknown Ably error";
+                console.warn("Ably connection failed:", message);
+            });
+
+            ably.connection.on("disconnected", function () {
+                console.warn("Ably connection disconnected");
+            });
         });
 
-        ably.connection.on("failed", function (err) {
-          const message =
-            err && err.reason
-              ? err.reason
-              : err && err.message
-              ? err.message
-              : "Unknown Ably error";
-          console.warn("Ably connection failed:", message);
+        //tamaño del overlay para el remote preview
+        /* calcula la altura real aunque los elementos sean absolute */
+        function computeOverlayHeight() {
+            let maxBottom = 0;
+            document.body.querySelectorAll('*').forEach(el => {
+                const r = el.getBoundingClientRect();
+                if (r.bottom > maxBottom) maxBottom = r.bottom;
+            });
+            // margen de seguridad
+            return Math.max(Math.ceil(maxBottom), 50);
+        }
+
+        /* envía la altura al parent (remote) */
+        function notifyHeight() {
+            const height = computeOverlayHeight();
+            parent.postMessage({ overlayHeight: height, source: 'overlay' }, "*");
+        }
+
+        /* Fallback: observar cambios DOM solo si no llamás manualmente desde los botones */
+        const observer = new MutationObserver((mutations) => {
+            // Debounce corto para agrupar cambios rápidos
+            if (window.__overlayHeightTimeout) clearTimeout(window.__overlayHeightTimeout);
+                window.__overlayHeightTimeout = setTimeout(() => {
+                notifyHeight();
+            }, 80);
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+        
+        // Para recibir previews desde el control (postMessage)
+        window.addEventListener('message', function(event) {
+        const data = event.data || {};
+        // Aceptar solo mensajes tipo 'preview'
+        if (data && data.type === 'preview' && data.state) {
+            // Solo aplicar preview si este overlay fue cargado como preview (query param preview=1)
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPreviewIframe = urlParams.get('preview') === '1';
+            if (isPreviewIframe) {
+            // actualizar textos/valores para previsualización
+            updateOverlay(Object.assign({}, data.state, { live: false }));
+            console.log('Applied preview via postMessage');
+            } else {
+            // si no es iframe de preview, ignorar
+            console.log('Preview message ignored (not preview iframe)');
+            }
+        }
         });
 
-        ably.connection.on("disconnected", function () {
-          console.warn("Ably connection disconnected");
+        /* Notificar al cargar la página */
+        window.addEventListener('load', () => {
+            // pequeño delay para que estilos y fuentes se apliquen
+            setTimeout(notifyHeight, 50);
         });
-      });
     </script>
-  </body>
+</body>
 </html>
